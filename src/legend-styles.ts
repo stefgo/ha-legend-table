@@ -86,6 +86,9 @@ export const legendStyles = css`
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
+  .legend-item.static {
+    cursor: default;
+  }
   .legend-item.hidden {
     opacity: 0.5;
   }

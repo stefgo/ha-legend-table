@@ -216,6 +216,9 @@ export interface EntityConfig {
    * the link mode: a series id for `chart`, an entity id for `entity`, an opaque
    * key for `event`. Defaults to the row's `key`.
    *
+   * `more-info` reads only the first target, as the entity whose dialog opens,
+   * and defaults to the row's statistic instead of its `key`.
+   *
    * A list links one row to several targets at once: a click drives all of them
    * to the same state, and the row is drawn greyed out once they are all hidden.
    */
@@ -309,13 +312,15 @@ export interface LegendGroupConfig extends LegendGroupOverrides {
 /* Link                                                                        */
 /* -------------------------------------------------------------------------- */
 
-export type LinkMode = "chart" | "entity" | "event" | "none";
+export type LinkMode = "chart" | "entity" | "event" | "more-info" | "none";
 
 export interface LinkConfig {
   /**
    * - `chart`: toggles a dataset of an `ha-chart-base` inside the `card:` block
    * - `entity`: toggles a Home Assistant entity (typically an `input_boolean`)
    * - `event`: dispatches a CustomEvent on `window`
+   * - `more-info`: opens Home Assistant's entity dialog instead of hiding the
+   *   row; cannot be combined with another mode
    * - `none`: the legend only greys out its own row
    */
   mode?: LinkMode;

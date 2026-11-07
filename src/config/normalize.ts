@@ -30,7 +30,10 @@ import {
 } from "./types";
 
 const TIMESPAN_MODES: TimespanMode[] = ["energy", "relative", "fixed"];
-const LINK_MODES: LinkMode[] = ["chart", "entity", "event", "none"];
+const LINK_MODES: LinkMode[] = ["chart", "entity", "event", "more-info", "none"];
+
+/** `domain.object_id`, which external statistics (`domain:name`) are not */
+const ENTITY_ID_PATTERN = /^[a-z0-9_]+\.[a-z0-9_]+$/;
 
 export const DEFAULT_PRECISION = 2;
 
@@ -75,6 +78,12 @@ export interface ResolvedEntity {
   hiddenByDefault: boolean;
   /** At least one target; several mean one row drives several targets */
   links: string[];
+  /**
+   * Entity whose dialog `link: {mode: more-info}` opens: the first explicit
+   * `link` target, else the row's first statistic. Unset when that is no
+   * entity id, e.g. an external statistic.
+   */
+  moreInfoEntity?: string;
   showValues: ShowValuesMode;
 }
 
@@ -144,11 +153,26 @@ function resolveColorConfig(value: unknown): ColorConfig | undefined {
  * typo costs the link, not the whole card.
  */
 function resolveLinkTargets(link: string | string[] | undefined, key: string): string[] {
+  const targets = explicitLinkTargets(link);
+  return targets.length ? targets : [key];
+}
+
+/** The usable targets of `entities[].link`, without the fallback to the key */
+function explicitLinkTargets(link: string | string[] | undefined): string[] {
   const list = Array.isArray(link) ? link : [link];
   const targets = list
     .filter((target): target is string => typeof target === "string" && Boolean(target.trim()))
     .map((target) => target.trim());
-  return targets.length ? [...new Set(targets)] : [key];
+  return [...new Set(targets)];
+}
+
+/** The entity `more-info` opens for a row, see `ResolvedEntity.moreInfoEntity` */
+function resolveMoreInfoEntity(
+  link: string | string[] | undefined,
+  statisticIds: string[]
+): string | undefined {
+  const target = explicitLinkTargets(link)[0] ?? statisticIds[0];
+  return target && ENTITY_ID_PATTERN.test(target) ? target : undefined;
 }
 
 /**
@@ -251,6 +275,7 @@ function resolveEntity(entity: EntityConfig, index: number): ResolvedEntity {
     add: numberOr(entity.add, 0, `entities[${index}].add`),
     hiddenByDefault: entity.hidden_by_default === true,
     links: resolveLinkTargets(entity.link, key),
+    moreInfoEntity: resolveMoreInfoEntity(entity.link, ids),
     showValues:
       oneOf(entity.show_values, ALL_SHOW_VALUES_MODES, `entities[${index}].show_values`) ??
       "always",
@@ -264,7 +289,7 @@ function resolveLinks(config: StatisticsLegendTableCardConfig): LinkConfig[] {
     return [];
   }
   const list = Array.isArray(raw) ? raw : [raw];
-  return list
+  const links = list
     .map((link, index) => {
       if (!link || typeof link !== "object") {
         fail(`\`link[${index}]\` must be an object`);
@@ -273,6 +298,13 @@ function resolveLinks(config: StatisticsLegendTableCardConfig): LinkConfig[] {
       return { ...link, mode };
     })
     .filter((link) => link.mode !== "none");
+
+  // `more-info` replaces hiding the row, every other mode hides something, so
+  // the two cannot both describe what one click does.
+  if (links.length > 1 && links.some((link) => link.mode === "more-info")) {
+    fail("`link: {mode: more-info}` cannot be combined with another link mode");
+  }
+  return links;
 }
 
 export function normalizeConfig(config: StatisticsLegendTableCardConfig): ResolvedConfig {

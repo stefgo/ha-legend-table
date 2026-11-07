@@ -24,6 +24,7 @@ import {
   LegendRow,
 } from "./config/types";
 import { isDarkMode } from "./colors";
+import { ifDefined } from "lit/directives/if-defined.js";
 import { styleMap } from "lit/directives/style-map.js";
 
 import { hassAffectsRender, onlyHassChanged } from "./hass-changes";
@@ -697,7 +698,21 @@ export class StatisticsLegendTableCard extends LitElement {
   }
 
   private _handleLegendClick(row: LegendRow): void {
-    this._links.toggle(row.links);
+    if (!this._links.opensMoreInfo()) {
+      this._links.toggle(row.links);
+      return;
+    }
+    const entityId = this._moreInfoEntity(row);
+    if (entityId) {
+      // Home Assistant's own event for its entity dialog, handled by the frontend
+      this.dispatchEvent(
+        new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true })
+      );
+    }
+  }
+
+  private _moreInfoEntity(row: LegendRow): string | undefined {
+    return this._config?.entities.find((entity) => entity.key === row.id)?.moreInfoEntity;
   }
 
   protected render() {
@@ -776,17 +791,20 @@ export class StatisticsLegendTableCard extends LitElement {
     const showUnit = config.show_unit !== false;
     const unit = showUnit && row.unit ? ` ${row.unit}` : "";
     const valuesHidden = hidesValues(row, this._selection !== undefined);
+    // `more-info` has no on/off state, and a row without an entity does nothing
+    const moreInfo = this._links.opensMoreInfo();
+    const clickable = !moreInfo || this._moreInfoEntity(row) !== undefined;
 
     return html`
       <div
-        class="legend-item ${hidden ? "hidden" : ""}"
+        class="legend-item ${hidden ? "hidden" : ""} ${clickable ? "" : "static"}"
         style="--ecl-columns: ${gridColumns}"
-        role="button"
-        tabindex="0"
-        aria-pressed=${!hidden}
+        role=${ifDefined(clickable ? "button" : undefined)}
+        tabindex=${ifDefined(clickable ? "0" : undefined)}
+        aria-pressed=${ifDefined(moreInfo ? undefined : String(!hidden))}
         @click=${() => this._handleLegendClick(row)}
         @keydown=${(ev: KeyboardEvent) => {
-          if (ev.key === "Enter" || ev.key === " ") {
+          if (clickable && (ev.key === "Enter" || ev.key === " ")) {
             ev.preventDefault();
             this._handleLegendClick(row);
           }

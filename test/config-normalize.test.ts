@@ -60,3 +60,60 @@ describe("columnsFor", () => {
     expect(columnsFor(["avg", "max"])).toEqual(["avg", "max"]);
   });
 });
+
+describe("link mode more-info", () => {
+  const moreInfo = { mode: "more-info" as const };
+
+  it("opens the row's statistic, not its key", () => {
+    const resolved = normalizeConfig(
+      config({ link: moreInfo, entities: [{ key: "range", statistic_id: "sensor.range" }] })
+    );
+    expect(resolved.entities[0].moreInfoEntity).toBe("sensor.range");
+    expect(resolved.entities[0].links).toEqual(["range"]);
+  });
+
+  it("prefers the first explicit link target", () => {
+    const resolved = normalizeConfig(
+      config({
+        link: moreInfo,
+        entities: [{ statistic_id: "sensor.copy", link: ["sensor.original", "sensor.other"] }],
+      })
+    );
+    expect(resolved.entities[0].moreInfoEntity).toBe("sensor.original");
+  });
+
+  it("uses the first statistic of a calculation", () => {
+    const resolved = normalizeConfig(
+      config({
+        link: moreInfo,
+        entities: [
+          {
+            key: "net",
+            calculation: {
+              terms: [{ statistic_id: "sensor.import" }, { statistic_id: "sensor.export" }],
+            },
+          },
+        ],
+      })
+    );
+    expect(resolved.entities[0].moreInfoEntity).toBe("sensor.import");
+  });
+
+  it("has no entity for an external statistic", () => {
+    const resolved = normalizeConfig(
+      config({ link: moreInfo, entities: [{ statistic_id: "sensor:external_energy" }] })
+    );
+    expect(resolved.entities[0].moreInfoEntity).toBeUndefined();
+  });
+
+  it("cannot be combined with another mode", () => {
+    expect(() => normalizeConfig(config({ link: [moreInfo, { mode: "chart" }] }))).toThrow(
+      /more-info/
+    );
+  });
+
+  it("may stand next to mode none", () => {
+    const resolved = normalizeConfig(config({ link: [moreInfo, { mode: "none" }] }));
+    expect(resolved.links).toEqual([moreInfo]);
+  });
+});
