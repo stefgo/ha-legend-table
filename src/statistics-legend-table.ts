@@ -83,6 +83,8 @@ const LEGEND_LINE_HEIGHT = 23;
 const LEGEND_GAP = 16;
 /** `.legend` margin-top plus its bottom padding */
 const LEGEND_PADDING = 24;
+/** Extra margin-top of `.legend.standalone`, the legend without a `card:` block */
+const LEGEND_STANDALONE_MARGIN = 8;
 /** `row-gap` between the values of a row that had to stack them */
 const LEGEND_STACKED_GAP = 2;
 
@@ -715,7 +717,9 @@ export class StatisticsLegendTableCard extends LitElement {
           : nothing}
         ${this._error ? html`<div class="notice">${this._error}</div>` : nothing}
         ${groups.some((group) => group.rows.length)
-          ? html`<div class="legend">${groups.map((group) => this._renderGroup(group))}</div>`
+          ? html`<div class="legend${this._config.raw.card ? "" : " standalone"}">
+              ${groups.map((group) => this._renderGroup(group))}
+            </div>`
           : nothing}
       </ha-card>
     `;
@@ -831,7 +835,7 @@ export class StatisticsLegendTableCard extends LitElement {
       return 0;
     }
 
-    let height = LEGEND_PADDING;
+    let height = LEGEND_PADDING + (this._config?.raw.card ? 0 : LEGEND_STANDALONE_MARGIN);
     let blocks = 0;
 
     groups.forEach((group) => {

@@ -50,6 +50,11 @@ export const legendStyles = css`
        below the last row belongs to the legend and the rows stay at the top. */
     flex: 1 1 auto;
   }
+  /* Without a card: block the legend is the card's only content, so it gets
+     the full card spacing above it instead of the smaller gap to a chart. */
+  .legend.standalone {
+    margin-top: 16px;
+  }
   .legend-group {
     display: flex;
     flex-direction: column;
