@@ -33,6 +33,9 @@ const PALETTE = [
 /** Fixed fill opacity applied to every swatch */
 export const SWATCH_FILL_ALPHA = 0.5;
 
+/** Fill opacity of the circle behind an icon (`indicator: icon`) */
+export const ICON_FILL_ALPHA = 0.2;
+
 /**
  * Whether Home Assistant currently renders in dark mode. `darkMode` is not part
  * of the `custom-card-helpers` types, but is present on the real frontend
@@ -138,4 +141,18 @@ export function withAlpha(color: string, alpha: number): string {
   }
 
   return trimmed;
+}
+
+/**
+ * Like `withAlpha()`, but never returns the color unchanged: a color it cannot
+ * parse is tinted through `color-mix()` instead. Used for the circle behind an
+ * icon, which is drawn in the icon's own color — returned unchanged, the circle
+ * would hide the icon completely.
+ */
+export function tintColor(color: string, alpha: number): string {
+  const trimmed = color.trim();
+  const tinted = withAlpha(trimmed, alpha);
+  return tinted !== trimmed
+    ? tinted
+    : `color-mix(in srgb, ${trimmed} ${Math.round(alpha * 100)}%, transparent)`;
 }

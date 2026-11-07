@@ -12,8 +12,10 @@
  */
 
 import {
+  ALL_INDICATOR_MODES,
   ALL_SHOW_VALUES_MODES,
   ColorConfig,
+  IndicatorMode,
   LegendEntityConfig,
   LegendTableCardConfig,
   LinkConfig,
@@ -33,6 +35,8 @@ export interface ResolvedEntityBase {
   key: string;
   name?: string;
   color?: ColorConfig;
+  icon?: string;
+  indicator?: IndicatorMode;
   unit?: string;
   multiply: number;
   add: number;
@@ -167,6 +171,8 @@ export function resolveEntityBase(
     key,
     name: typeof entity.name === "string" ? entity.name : undefined,
     color: resolveColorConfig(entity.color),
+    icon: trimmedString(entity.icon),
+    indicator: oneOf(entity.indicator, ALL_INDICATOR_MODES, `entities[${index}].indicator`),
     unit: typeof entity.unit === "string" ? entity.unit : undefined,
     multiply: numberOr(entity.multiply, 1, `entities[${index}].multiply`),
     add: numberOr(entity.add, 0, `entities[${index}].add`),
@@ -217,6 +223,18 @@ export function checkCardConfig(config: LegendTableCardConfig, rowNoun: string):
   if (config.card !== undefined && (typeof config.card !== "object" || !config.card?.type)) {
     fail("`card` must be a card configuration with a `type`");
   }
+}
+
+/**
+ * Validates `legend.indicator` and `legend.groups[].indicator` for their error
+ * messages; the values are read from the legend config when rendering.
+ */
+export function checkLegendIndicators(config: LegendTableCardConfig): void {
+  oneOf(config.legend?.indicator, ALL_INDICATOR_MODES, "legend.indicator");
+  const groups = Array.isArray(config.legend?.groups) ? config.legend.groups : [];
+  groups.forEach((group, index) =>
+    oneOf(group?.indicator, ALL_INDICATOR_MODES, `legend.groups[${index}].indicator`)
+  );
 }
 
 /** Rejects two rows sharing a key — selectors and links address rows by it */

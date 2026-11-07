@@ -32,6 +32,20 @@ export type ShowValuesMode = "always" | "never" | "selection";
 
 export const ALL_SHOW_VALUES_MODES: ShowValuesMode[] = ["always", "never", "selection"];
 
+/**
+ * What a row shows in front of its name.
+ *
+ * - `box`: the color box (default)
+ * - `icon`: the row's icon in its color, on a faint circle of the same color
+ * - `plain_icon`: the row's icon in the normal text color, without any color
+ * - `none`: nothing; the column is dropped where no row of a group needs it
+ *
+ * `icon` without an icon falls back to `box`, `plain_icon` to `none`.
+ */
+export type IndicatorMode = "box" | "icon" | "plain_icon" | "none";
+
+export const ALL_INDICATOR_MODES: IndicatorMode[] = ["box", "icon", "plain_icon", "none"];
+
 /** Statistic value read per bucket, mirrors the recorder's own types */
 export type StatType = "change" | "sum" | "mean" | "min" | "max" | "state";
 
@@ -196,6 +210,13 @@ export interface LegendEntityConfig {
    * `{light: "...", dark: "..."}` to use a different color per theme mode.
    */
   color?: ColorConfig;
+  /**
+   * Icon shown by `indicator: icon` / `plain_icon`, e.g. `mdi:solar-power`.
+   * `entity-legend-table` defaults it to the entity's `icon` attribute.
+   */
+  icon?: string;
+  /** What the row shows in front of its name, defaults to the legend's `indicator` */
+  indicator?: IndicatorMode;
   /** Unit appended to the values, defaults to the statistic's or entity's unit */
   unit?: string;
   /** Every value is multiplied by this, applied before `add`. Defaults to 1 */
@@ -337,6 +358,8 @@ export interface LegendConfig {
    * fit, a large value always wraps.
    */
   min_name_width?: number;
+  /** What every row shows in front of its name, defaults to `box` */
+  indicator?: IndicatorMode;
   /** Closing total row */
   total?: LegendTotalConfig;
   /** Splits the legend into named sections; unmatched rows form a trailing, unnamed group */
@@ -352,6 +375,7 @@ export type LegendGroupOverrides = Pick<
   | "hide_zero"
   | "show_headers"
   | "min_name_width"
+  | "indicator"
   | "total"
 >;
 
@@ -434,6 +458,10 @@ export interface LegendRow {
   color: string;
   /** Translucent version of `color`, used for the swatch fill */
   fillColor: string;
+  /** Icon for `indicator: icon` / `plain_icon` */
+  icon?: string;
+  /** From `entities[].indicator`; the group's and legend's are applied on render */
+  indicator?: IndicatorMode;
   unit: string;
   sum: number;
   min: number;

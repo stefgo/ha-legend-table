@@ -26,6 +26,7 @@ import {
   ResolvedConfigBase,
   ResolvedEntityBase,
   checkCardConfig,
+  checkLegendIndicators,
   checkUniqueKeys,
   fail,
   numberOr,
@@ -175,6 +176,7 @@ export function normalizeConfig(config: StatisticsLegendTableCardConfig): Resolv
     "aggregation.period"
   );
   oneOf(config.legend?.total?.stat_type, ALL_STAT_TYPES, "legend.total.stat_type");
+  checkLegendIndicators(config);
 
   return { raw: config, entities, links: resolveLinks(config) };
 }

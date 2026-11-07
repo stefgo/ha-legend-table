@@ -132,6 +132,32 @@ describe("buildLiveRows", () => {
     rows.forEach((row) => expect(row.text).toBe(MISSING_TEXT));
   });
 
+  it("takes the icon from the entity unless the row sets one", () => {
+    const hass = fakeHass({
+      "sensor.pv": { state: "1", attributes: { icon: "mdi:solar-power" } },
+      "sensor.grid": { state: "2" },
+    });
+    const [fromEntity, explicit, none] = rowsFor(
+      [
+        { entity: "sensor.pv" },
+        { entity: "sensor.pv", key: "pv2", icon: "mdi:flash" },
+        { entity: "sensor.grid" },
+      ],
+      hass
+    );
+    expect(fromEntity.icon).toBe("mdi:solar-power");
+    expect(explicit.icon).toBe("mdi:flash");
+    expect(none.icon).toBeUndefined();
+  });
+
+  it("gives a calculated row no icon of its entities", () => {
+    const [row] = rowsFor(
+      [{ key: "calc", calculation: { terms: [{ entity: "sensor.pv" }] } }],
+      fakeHass({ "sensor.pv": { state: "1", attributes: { icon: "mdi:solar-power" } } })
+    );
+    expect(row.icon).toBeUndefined();
+  });
+
   it("takes the entity's display precision", () => {
     const [row] = rowsFor(
       [{ entity: "sensor.pv" }],

@@ -207,6 +207,21 @@ function rowValue(hass: HomeAssistant | undefined, entity: ResolvedLiveEntity): 
   return entity.source ? readLiveValue(hass, entity.source) : { kind: "missing" };
 }
 
+/**
+ * The `icon` attribute of a row's entity, used when the row sets no `icon`.
+ * A calculated row has no single entity, so it gets none.
+ */
+function entityIcon(
+  hass: HomeAssistant | undefined,
+  entity: ResolvedLiveEntity
+): string | undefined {
+  if (!entity.source) {
+    return undefined;
+  }
+  const icon = asLive(hass)?.states?.[entity.source.entityId]?.attributes?.icon;
+  return typeof icon === "string" && icon.trim() ? icon.trim() : undefined;
+}
+
 /** Builds one legend row per configured entity, in configuration order */
 export function buildLiveRows(
   entities: ResolvedLiveEntity[],
@@ -231,6 +246,8 @@ export function buildLiveRows(
       name: entity.name ?? (firstId ? statisticLabel(hass, firstId) : entity.key),
       color,
       fillColor: withAlpha(color, SWATCH_FILL_ALPHA),
+      icon: entity.icon ?? entityIcon(hass, entity),
+      indicator: entity.indicator,
       unit: entity.calculation?.unit ?? entity.unit ?? defaultUnit(hass, entity),
       sum: value,
       min: value,

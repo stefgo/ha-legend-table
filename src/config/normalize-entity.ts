@@ -20,6 +20,7 @@ import {
   ResolvedConfigBase,
   ResolvedEntityBase,
   checkCardConfig,
+  checkLegendIndicators,
   checkUniqueKeys,
   fail,
   numberOr,
@@ -154,6 +155,7 @@ export function normalizeLiveConfig(config: EntityLegendTableCardConfig): Resolv
 
   const entities = config.entities!.map(resolveEntity);
   checkUniqueKeys(entities);
+  checkLegendIndicators(config);
 
   return { raw: config, entities, links: resolveLinks(config) };
 }
