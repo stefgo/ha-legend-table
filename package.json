@@ -1,9 +1,9 @@
 {
-  "name": "statistics-legend-table",
+  "name": "legend-table",
   "version": "0.6.0",
-  "description": "Standalone Home Assistant Lovelace legend card with its own statistics, optionally wrapping and linking to any other card",
+  "description": "Home Assistant Lovelace legend table cards for recorder statistics and live entity values, optionally wrapping and linking to any other card",
   "type": "module",
-  "main": "dist/statistics-legend-table.js",
+  "main": "dist/legend-table.js",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "build": "rollup -c",

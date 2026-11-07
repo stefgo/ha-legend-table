@@ -10,21 +10,21 @@ import { nextBuild } from "./scripts/build-number.mjs";
 
 const pkg = createRequire(import.meta.url)("./package.json");
 
-// Only `builddeploy.sh` asks for a build counter (STATSTABLE_BUILD_COUNTER);
+// Only `builddeploy.sh` asks for a build counter (LEGENDTABLE_BUILD_COUNTER);
 // every other build, the GitHub release included, reports the bare semver.
 // Bumped once per rollup run — a `watch` session keeps the number it started
 // with, exactly like the build it stands in for.
 const { build, builtAt, full } = nextBuild(pkg.version);
-console.log(`statistics-legend-table ${full} (${builtAt})`);
+console.log(`legend-table ${full} (${builtAt})`);
 
-// Only the GitHub release workflow sets STATSTABLE_MINIFY; local builds and
+// Only the GitHub release workflow sets LEGENDTABLE_MINIFY; local builds and
 // `watch` keep the readable bundle.
-const minify = process.env.STATSTABLE_MINIFY === "1";
+const minify = process.env.LEGENDTABLE_MINIFY === "1";
 
 export default defineConfig({
   input: "src/index.ts",
   output: {
-    file: "dist/statistics-legend-table.js",
+    file: "dist/legend-table.js",
     format: "es",
     sourcemap: true,
   },
@@ -51,7 +51,7 @@ export default defineConfig({
       terser({
         format: {
           comments: false,
-          preamble: `/*! statistics-legend-table ${full} | MIT */`,
+          preamble: `/*! legend-table ${full} | MIT */`,
         },
       }),
   ].filter(Boolean),

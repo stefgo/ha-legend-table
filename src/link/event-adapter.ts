@@ -4,10 +4,10 @@
  * Two events on `window`, both carrying the legend's `link_id` so several
  * legends can coexist on one dashboard:
  *
- *   statistics-legend-table:toggle   ← dispatched by this card on every click
+ *   legend-table:toggle   ← dispatched by this card on every click
  *     detail: { link_id, target, hidden }
  *
- *   statistics-legend-table:state    → listened for, to adopt outside state
+ *   legend-table:state    → listened for, to adopt outside state
  *     detail: { link_id, target, hidden }   // one target
  *     detail: { link_id, hidden: string[] } // the full hidden set
  *
@@ -19,8 +19,8 @@
 
 import type { LinkAdapter, LinkContext } from "./types";
 
-export const TOGGLE_EVENT = "statistics-legend-table:toggle";
-export const STATE_EVENT = "statistics-legend-table:state";
+export const TOGGLE_EVENT = "legend-table:toggle";
+export const STATE_EVENT = "legend-table:state";
 
 interface StateDetail {
   link_id?: string;
