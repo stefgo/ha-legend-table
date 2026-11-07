@@ -32,6 +32,7 @@ via [`card`](#embedding-another-card-card), with this card's five statistics and
   - [`timespan` — which range is shown](#timespan--which-range-is-shown)
   - [`legend` — how the rows look](#legend--how-the-rows-look)
   - [`aggregation` — bucket size](#aggregation--bucket-size)
+- [Live values: `entity-legend-table`](#live-values-entity-legend-table)
 - [Embedding another card: `card`](#embedding-another-card-card)
 - [Linking another component: `link`](#linking-another-component-link)
 - [Development](#development)
@@ -333,6 +334,104 @@ The bucket size is not only a performance question: `min`/`max`/`avg` are comput
 With `period: day`, `Max` is therefore the strongest day; with `period: hour` the strongest hour.
 `Σ` is unaffected by this. `auto` follows Home Assistant's own rule (> 35 days → `month`, > 2 days
 → `day`, otherwise `hour`).
+
+---
+
+## Live values: `entity-legend-table`
+
+`custom:entity-legend-table` is the same legend over **current values** instead of statistics: one
+row per entity with its state right now, updated the moment the state changes. It needs no
+recorder and no timespan. [`legend`](#legend--how-the-rows-look),
+[`card`](#embedding-another-card-card) and [`link`](#linking-another-component-link) work exactly as
+described for the statistics card.
+
+```yaml
+type: custom:entity-legend-table
+title: Power now
+entities:
+  - entity: sensor.solar_power
+    name: Solar
+    color: "#ff9800"
+  - entity: sensor.grid_power
+    name: Grid
+    color: "#488fc2"
+  - entity: climate.living_room
+    attribute: current_temperature
+    name: Living room
+    unit: °C
+legend:
+  total:
+    mode: sum
+```
+
+| Option     | Type          | Default      | Description |
+| ---------- | ------------- | ------------ | ----------- |
+| `type`     | string        | –            | `custom:entity-legend-table` |
+| `entities` | list          | **required** | The rows, see below |
+| `title`    | string        | –            | Card heading |
+| `legend`   | object        | –            | As for the statistics card, except `columns`: a row has one value |
+| `card`     | object        | –            | [Any Lovelace card](#embedding-another-card-card) above the legend |
+| `link`     | object / list | –            | [What a click does](#linking-another-component-link) |
+
+Each row:
+
+| Option              | Type            | Default                          | Description |
+| ------------------- | --------------- | -------------------------------- | ----------- |
+| `entity`            | string          | –                                | Entity shown in this row. Required unless `calculation` is used |
+| `attribute`         | string          | –                                | Show this attribute instead of the state |
+| `calculation`       | object          | –                                | Compute the row from several entities, see below |
+| `name`              | string          | friendly name                    | Label |
+| `color`             | string / object | palette                          | As for the [statistics card](#per-theme-colors) |
+| `unit`              | string          | `unit_of_measurement`            | Unit after the value. An attribute has no unit unless this is set |
+| `multiply` / `add`  | number          | `1` / `0`                        | Linear conversion (`value * multiply + add`) |
+| `key`               | string          | `entity`                         | Stable ID of the row for [`legend.groups`](#legendgroups) and [`link`](#linking-another-component-link) |
+| `link`              | string / list   | `key`                            | As for the statistics card; [`more-info`](#mode-more-info) opens `entity` by default |
+| `hidden_by_default` | bool            | `false`                          | Row starts hidden |
+| `show_values`       | string          | `always`                         | `always` or `never` — there is no selection here |
+
+What a row shows:
+
+- **A number** is shown with `legend.precision` decimal places, or — without it — with the
+  display precision set for the entity in Home Assistant, otherwise 2.
+- **A text state** such as `on` or `heat` is shown as Home Assistant shows it, translated. It
+  takes no part in a sum.
+- **`unavailable`, `unknown`** or a missing entity is shown as `—` and left out of the sum;
+  `hide_zero` hides such a row.
+
+**Calculated rows** take the same `calculation` block as the
+[statistics card](#calculated-rows), with `entity` (and optionally `attribute`) in place of
+`statistic_id` and without `stat_type`. The terms are applied to the current values in
+configuration order. If one of the entities has no number, or a division by 0 occurs, the row
+shows `—` instead of a value computed from an incomplete set.
+
+```yaml
+entities:
+  - key: house
+    name: House
+    calculation:
+      unit: W
+      terms:
+        - entity: sensor.grid_power
+        - entity: sensor.solar_power
+        - entity: sensor.grid_export_power
+          operation: subtract
+```
+
+**[`legend.total`](#legendtotal)**: `mode: sum` adds up the visible rows with a number; without a
+`precision` it uses the finest precision of those rows. In `mode: ratio`, `numerator` and
+`denominator` list **entity IDs** whose current states are summed; `stat_type` does not apply.
+
+```yaml
+legend:
+  total:
+    name: Self-sufficiency now
+    mode: ratio
+    numerator: [sensor.solar_power]
+    denominator: [sensor.house_power]
+```
+
+Options of the statistics card that have no meaning here (`timespan`, `aggregation`, `stat_type`,
+`legend.columns`) are ignored, so a configuration copied over still renders.
 
 ---
 

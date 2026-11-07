@@ -238,6 +238,46 @@ export interface StatisticsEntityConfig extends LegendEntityConfig {
   stat_type?: StatType;
 }
 
+/** One step of a calculated row of `entity-legend-table` */
+export interface LiveCalculationTerm {
+  /** Entity read for this term; omit to use `constant` instead */
+  entity?: string;
+  /** Reads this attribute instead of the entity's state */
+  attribute?: string;
+  /** Constant operand, used when no `entity` is given. Defaults to 0 */
+  constant?: number;
+  /** Operation applied to the running result, defaults to `add` */
+  operation?: CalculationOperation;
+  /** Term value is multiplied by this, applied before `add`. Defaults to 1 */
+  multiply?: number;
+  /** Added to the term value after `multiply`. Defaults to 0 */
+  add?: number;
+  /** Lower clamp of the term value, applied after `multiply`/`add` */
+  clip_min?: number;
+  /** Upper clamp of the term value, applied after `multiply`/`add` */
+  clip_max?: number;
+}
+
+/** A row of `entity-legend-table` computed from the current values of entities */
+export interface LiveCalculationConfig {
+  /** Ordered calculation steps; at least one is required */
+  terms: LiveCalculationTerm[];
+  /** Start value before the first term, defaults to 0 */
+  initial_value?: number;
+  /** Unit of the result, defaults to the unit of the first entity used */
+  unit?: string;
+}
+
+/** One row of `entity-legend-table` */
+export interface LiveEntityConfig extends LegendEntityConfig {
+  /** Entity whose current value this row shows. Mutually exclusive with `calculation` */
+  entity?: string;
+  /** Shows this attribute instead of the entity's state */
+  attribute?: string;
+  /** Row computed from the current values of several entities and constants */
+  calculation?: LiveCalculationConfig;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Legend                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -254,11 +294,17 @@ export interface LegendTotalConfig {
    * - `none`: no total row
    */
   mode?: "sum" | "ratio" | "none";
-  /** `statistic_id`s summed for the numerator, `ratio` mode only */
+  /**
+   * Ids summed for the numerator, `ratio` mode only: `statistic_id`s in the
+   * statistics card, entity ids (current state) in the entity card
+   */
   numerator?: string[];
-  /** `statistic_id`s summed for the denominator, `ratio` mode only */
+  /** Ids summed for the denominator, `ratio` mode only, see `numerator` */
   denominator?: string[];
-  /** Statistic type read per entity, `ratio` mode only. Defaults to `change` */
+  /**
+   * Statistic type read per entity, `ratio` mode of the statistics card only.
+   * Defaults to `change`
+   */
   stat_type?: StatType;
   /** Decimal places, defaults to the legend precision (ratio mode: 1) */
   precision?: number;
@@ -364,6 +410,15 @@ export interface StatisticsLegendTableCardConfig extends LegendTableCardConfig {
   timespan?: TimespanConfig;
   aggregation?: AggregationConfig;
   entities?: StatisticsEntityConfig[];
+}
+
+/**
+ * `entity-legend-table`: the same legend over live entity state. `legend.columns`
+ * does not apply — a row has exactly one current value — and in
+ * `legend.total: {mode: ratio}` the operands name entities, not statistics.
+ */
+export interface EntityLegendTableCardConfig extends LegendTableCardConfig {
+  entities?: LiveEntityConfig[];
 }
 
 /* -------------------------------------------------------------------------- */

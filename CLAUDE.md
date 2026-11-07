@@ -33,13 +33,16 @@ npm test           # vitest run
 src/index.ts                    card registration (window.customCards)
 src/legend-table-base.ts        shared LitElement: rendering, card:, links, sizing, click handling
 src/statistics-legend-table.ts  statistics card: timespan, fetch, graph selection
+src/entity-legend-table.ts      entity card: rows rebuilt from hass.states on every watched change
 src/config/types.ts             config and row types
 src/config/normalize-common.ts  setConfig validation and defaults shared by both cards
 src/config/normalize-statistics.ts  validation of the statistics card
+src/config/normalize-entity.ts  validation of the entity card
 src/data/timespan.ts            timespan modes -> {start, end} + bucket period
 src/data/energy-collection.ts   subscription to the energy date picker
 src/data/statistics.ts          recorder websocket calls
 src/data/aggregate.ts           buckets -> LegendRow (sum/min/max/avg)
+src/data/live.ts                current state -> LegendRow (entity card)
 src/colors.ts                   palette + swatch fill derivation
 src/legend-stats.ts             grouping, ordering, total row, number formatting
 src/legend-styles.ts            legend CSS

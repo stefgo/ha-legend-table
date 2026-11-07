@@ -5,7 +5,10 @@ declare global {
 }
 
 import "./statistics-legend-table";
-import { CARD_VERSION, STATISTICS_CARD_NAME } from "./version";
+import "./entity-legend-table";
+import { CARD_VERSION, ENTITY_CARD_NAME, STATISTICS_CARD_NAME } from "./version";
+
+const DOCUMENTATION_URL = "https://github.com/stefgo/ha-statistics-legend-table";
 
 console.info(
   "%c STATISTICS-LEGEND-TABLE %c " + CARD_VERSION + " ",
@@ -14,10 +17,19 @@ console.info(
 );
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: STATISTICS_CARD_NAME,
-  name: "Statistics Table and Legend",
-  description:
-    "Standalone legend with color, name and statistic values per row — optionally wrapped around any other card and linked to it.",
-  documentationURL: "https://github.com/stefgo/ha-statistics-legend-table",
-});
+window.customCards.push(
+  {
+    type: STATISTICS_CARD_NAME,
+    name: "Statistics Table and Legend",
+    description:
+      "Standalone legend with color, name and statistic values per row — optionally wrapped around any other card and linked to it.",
+    documentationURL: DOCUMENTATION_URL,
+  },
+  {
+    type: ENTITY_CARD_NAME,
+    name: "Entity Legend Table",
+    description:
+      "The same legend with the current value of each entity per row — live, without the recorder.",
+    documentationURL: DOCUMENTATION_URL,
+  },
+);

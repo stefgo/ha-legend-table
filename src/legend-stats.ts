@@ -21,8 +21,14 @@ import type { Statistics } from "./data/statistics";
 
 export { DEFAULT_PRECISION };
 
+/**
+ * `hide_zero`: drops rows without a value or with a zero one. A row showing
+ * text (a live state such as `on`) has a value even though its `sum` is 0.
+ */
 function filterHideZero(rows: LegendRow[], config: LegendConfig): LegendRow[] {
-  return config.hide_zero ? rows.filter((row) => !(row.count === 0 || row.sum === 0)) : rows;
+  return config.hide_zero
+    ? rows.filter((row) => !(row.count === 0 || (row.text === undefined && row.sum === 0)))
+    : rows;
 }
 
 function resolveGroupConfig(base: LegendConfig, override: LegendGroupOverrides): LegendConfig {
@@ -177,8 +183,9 @@ export function computeTotal(
     };
   }
 
-  // mode "sum" (default)
-  const rows = visibleRows.filter((row) => !isExcludedFromValues(row));
+  // mode "sum" (default). A row showing text instead of a number — a live
+  // state such as `on`, or one that is unavailable — has nothing to add.
+  const rows = visibleRows.filter((row) => !isExcludedFromValues(row) && row.text === undefined);
   const precision = config.precision ?? fallbackPrecision;
   const value = rows.reduce((sum, row) => sum + row.sum, 0);
   const units = new Set(rows.map((row) => row.unit).filter((unit) => unit));
