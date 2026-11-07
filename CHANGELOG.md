@@ -8,6 +8,68 @@ An entry is put together by the release workflow: the text written by hand in
 are added to the release page and do not belong in an entry. The entries up to
 0.5.3 were written by hand as a whole.
 
+## [1.0.0](https://github.com/stefgo/ha-legend-table/compare/v0.6.0...v1.0.0) (2026-11-07)
+
+### New name: `ha-legend-table`
+
+The project is now called **Legend Table Cards** (`stefgo/ha-legend-table`), because it is no
+longer about statistics alone. The card type `custom:statistics-legend-table` and all of its
+options are unchanged — **dashboards keep working without any edit**. What an upgrade needs:
+
+1. In HACS, remove the custom repository `stefgo/ha-statistics-legend-table`, add
+   `stefgo/ha-legend-table` (category *Dashboard*) and install “Legend Table Cards”.
+2. Under *Settings → Dashboards → Resources*, delete
+   `/hacsfiles/ha-statistics-legend-table/statistics-legend-table.js` and make sure
+   `/hacsfiles/ha-legend-table/legend-table.js` is registered. With both in place the card would
+   be loaded twice.
+3. Only if you use `link: {mode: event}` from your own JavaScript: the events are now called
+   `legend-table:toggle` and `legend-table:state`. The old names are no longer sent or received.
+
+### New card: live values with `entity-legend-table`
+
+`custom:entity-legend-table` is the same legend over current values instead of statistics: one row
+per entity with its state right now, updated the moment the state changes, without the recorder
+and without a timespan.
+
+```yaml
+type: custom:entity-legend-table
+entities:
+  - entity: sensor.solar_power
+  - entity: climate.living_room
+    attribute: current_temperature
+    unit: °C
+legend:
+  total:
+    mode: sum
+```
+
+- A row shows an entity's state or, with `attribute`, one of its attributes.
+- Calculated rows take the same `calculation` block as the statistics card, with `entity` in place
+  of `statistic_id`; a row with an unavailable entity shows `—` instead of a wrong value.
+- Text states such as `on` or `heat` are shown as Home Assistant shows them, translated, and stay
+  out of the sum. `unavailable` and `unknown` are shown as `—`.
+- Without `legend.precision` each value uses the display precision set for the entity in Home
+  Assistant.
+- `legend` (groups, `total: sum` and `total: ratio` over entity IDs), the embedded `card` and every
+  `link` mode work as in the statistics card.
+
+Apart from the new name, `statistics-legend-table` behaves exactly as before.
+
+### ⚠ BREAKING CHANGES
+
+* The resource URL is now
+/hacsfiles/ha-legend-table/legend-table.js and HACS installs from
+stefgo/ha-legend-table. The events statistics-legend-table:toggle and
+statistics-legend-table:state are no longer sent or received; use
+legend-table:toggle and legend-table:state.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+### Features
+
+* add entity-legend-table card for live values ([e7132f5](https://github.com/stefgo/ha-legend-table/commit/e7132f5d1cd3e12ad61caca85061162d9897fd5e))
+* rename project to ha-legend-table ([cf0f6b0](https://github.com/stefgo/ha-legend-table/commit/cf0f6b0f6591a5477f24a9c41b2151151b5c3d01))
+
 ## [0.6.0](https://github.com/stefgo/ha-statistics-legend-table/compare/v0.5.5...v0.6.0) (2026-11-07)
 
 ### Open the entity dialog on click
