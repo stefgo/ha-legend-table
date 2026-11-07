@@ -1,6 +1,6 @@
 {
   "name": "legend-table",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Home Assistant Lovelace legend table cards for recorder statistics and live entity values, optionally wrapping and linking to any other card",
   "type": "module",
   "main": "dist/legend-table.js",

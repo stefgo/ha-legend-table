@@ -8,6 +8,19 @@ An entry is put together by the release workflow: the text written by hand in
 are added to the release page and do not belong in an entry. The entries up to
 0.5.3 were written by hand as a whole.
 
+## [1.1.1](https://github.com/stefgo/ha-legend-table/compare/v1.1.0...v1.1.1) (2026-11-07)
+
+### Changed
+
+- `indicator: plain_icon` shows the icon in Home Assistant's icon color
+  (`--state-icon-color`, blue by default) instead of the text color, like the
+  icons of the built-in entity rows. A theme that sets `--state-icon-color`
+  changes it too.
+
+### Features
+
+* update plain_icon indicator to use Home Assistant's icon color ([3e3737c](https://github.com/stefgo/ha-legend-table/commit/3e3737c9542b4420349b8b41ae9e43258b7e84f1))
+
 ## [1.1.0](https://github.com/stefgo/ha-legend-table/compare/v1.0.0...v1.1.0) (2026-11-07)
 
 ### Icons in the legend
