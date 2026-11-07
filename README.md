@@ -125,6 +125,8 @@ Each entry becomes one legend row, in the order given here.
 | `statistic_id`      | string          | –              | Statistic shown in this row. Required unless [`calculation`](#calculated-rows) is used |
 | `name`              | string          | statistic name | Label |
 | `color`             | string / object | palette        | Color of the indicator, see [Per-theme colors](#per-theme-colors) |
+| `indicator`         | string          | `legend.indicator` | Color box, icon or nothing in front of the name, see [Color box or icon](#color-box-or-icon-indicator) |
+| `icon`              | string          | –              | Icon for `indicator: icon` / `plain_icon`, e.g. `mdi:solar-power` |
 | `stat_type`         | string          | `change`       | `change`, `sum`, `mean`, `min`, `max`, `state` |
 | `unit`              | string          | metadata       | Unit shown after the values |
 | `multiply` / `add`  | number          | `1` / `0`      | Linear conversion per bucket (`value * multiply + add`) |
@@ -148,6 +150,38 @@ entities:
       light: "#488fc2"
       dark: "#7fb2de"
 ```
+
+#### Color box or icon: `indicator`
+
+What a row shows in front of its name. Set it for every row in
+[`legend`](#legend--how-the-rows-look) (or per [group](#legendgroups)) and override it per row:
+
+| Value        | In front of the name | Hidden row |
+| ------------ | -------------------- | ---------- |
+| `box`        | the color box (default) | only the outline of the box |
+| `icon`       | the row's `icon` in its color, on a faint circle of the same color | only the outline of the circle |
+| `plain_icon` | the row's `icon` in the normal text color, without any color | the icon turns grey |
+| `none`       | nothing | |
+
+```yaml
+legend:
+  indicator: icon
+entities:
+  - statistic_id: sensor.solar_energy
+    icon: mdi:solar-power
+  - statistic_id: sensor.grid_import
+    icon: mdi:transmission-tower
+  - statistic_id: sensor.electricity_price
+    indicator: plain_icon
+    icon: mdi:currency-eur
+  - statistic_id: sensor.outdoor_temperature
+    indicator: none
+```
+
+A row set to `icon` without an `icon` shows the color box, so its color stays visible; a row set
+to `plain_icon` without one shows nothing. The statistics card uses only the `icon` set here; the
+[entity card](#live-values-entity-legend-table) falls back to the entity's own icon. If no row of
+a group shows anything, the names move to the left edge.
 
 #### When a row shows values: `show_values`
 
@@ -275,6 +309,7 @@ See also [`show_values: selection`](#when-a-row-shows-values-show_values) for ro
 | `total`          | object | –       | Closing row, see [`legend.total`](#legendtotal) |
 | `groups`         | list   | –       | Split into named sections, see [`legend.groups`](#legendgroups) |
 | `min_name_width` | number | `120`   | Pixels the name keeps before the values stack below it, see [Responsive layout: `min_name_width`](#responsive-layout-min_name_width) |
+| `indicator`      | string | `box`   | What every row shows in front of its name: `box`, `icon`, `plain_icon`, `none`, see [Color box or icon](#color-box-or-icon-indicator) |
 
 Whether a row shows values at all is set on the row itself, in
 [`entities[].show_values`](#when-a-row-shows-values-show_values).
@@ -329,8 +364,8 @@ legend:
 `name` is the heading (no `name` means no heading), `entities` lists the group's selectors. A
 selector matches a row's [`key`](#entities--the-rows) or its displayed `name`.
 
-`columns`, `precision`, `show_unit`, `hide_zero`, `show_headers`, `min_name_width` and `total`
-override the top-level option of the same name for this group only. Rows that match no group end
+`columns`, `precision`, `show_unit`, `hide_zero`, `show_headers`, `min_name_width`, `indicator`
+and `total` override the top-level option of the same name for this group only. Rows that match no group end
 up in an unnamed remainder group at the end — nothing is lost.
 
 #### Responsive layout: `min_name_width`
@@ -406,6 +441,8 @@ Each row:
 | `calculation`       | object          | –                                | Compute the row from several entities, see below |
 | `name`              | string          | friendly name                    | Label |
 | `color`             | string / object | palette                          | As for the [statistics card](#per-theme-colors) |
+| `indicator`         | string          | `legend.indicator`               | As for the [statistics card](#color-box-or-icon-indicator) |
+| `icon`              | string          | the entity's icon                | Icon for `indicator: icon` / `plain_icon`. Without it, the `icon` attribute of `entity` is used; a calculated row has none |
 | `unit`              | string          | `unit_of_measurement`            | Unit after the value. An attribute has no unit unless this is set |
 | `multiply` / `add`  | number          | `1` / `0`                        | Linear conversion (`value * multiply + add`) |
 | `key`               | string          | `entity`                         | Stable ID of the row for [`legend.groups`](#legendgroups) and [`link`](#linking-another-component-link) |

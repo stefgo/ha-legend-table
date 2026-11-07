@@ -104,6 +104,31 @@ export const legendStyles = css`
     display: block;
     transition: background-color 0.2s;
   }
+  /* \`indicator: icon\`: the icon in the row's color on a faint circle of it.
+     Colors come from the row, see \`_renderIndicator()\`. */
+  .legend-icon.badge {
+    height: 32px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    --mdc-icon-size: 18px;
+  }
+  /* \`indicator: plain_icon\`: the icon alone, in the text color */
+  .legend-icon.plain {
+    height: 24px;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-text-color);
+    --mdc-icon-size: 24px;
+  }
+  .legend-item.hidden .legend-icon.plain {
+    color: var(--secondary-text-color);
+  }
   .legend-name {
     color: var(--primary-text-color);
     overflow: hidden;
@@ -125,6 +150,9 @@ export const legendStyles = css`
     padding-top: 12px;
     padding-left: 64px;
     border-top: 1px solid var(--divider-color);
+  }
+  .legend-group.no-indicator .legend-total {
+    padding-left: 0;
   }
   .legend-total .legend-name {
     font-weight: var(--ha-font-weight-medium);
@@ -158,5 +186,11 @@ export const legendStyles = css`
     grid-column: 2;
     text-align: left;
     color: var(--secondary-text-color);
+  }
+  .legend-group.narrow.no-indicator .legend-item {
+    grid-template-columns: 1fr;
+  }
+  .legend-group.narrow.no-indicator .legend-item .legend-value {
+    grid-column: 1;
   }
 `;

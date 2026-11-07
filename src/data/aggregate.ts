@@ -235,6 +235,8 @@ export function buildRows(
       name: entity.name ?? (firstId ? statisticLabel(hass, firstId, firstMeta) : entity.key),
       color,
       fillColor: withAlpha(color, SWATCH_FILL_ALPHA),
+      icon: entity.icon,
+      indicator: entity.indicator,
       unit: entity.calculation?.unit ?? entity.unit ?? statisticUnit(hass, firstId, firstMeta),
       sum: count ? aggregateOverBuckets(values, entity.statType, total, avg, min, max) : 0,
       min: count ? min : 0,

@@ -9,6 +9,7 @@
 
 import { DEFAULT_PRECISION } from "./config/normalize-common";
 import type {
+  IndicatorMode,
   LegendConfig,
   LegendGroupOverrides,
   LegendGroupResult,
@@ -39,8 +40,35 @@ function resolveGroupConfig(base: LegendConfig, override: LegendGroupOverrides):
     hide_zero: override.hide_zero ?? base.hide_zero,
     show_headers: override.show_headers ?? base.show_headers,
     min_name_width: override.min_name_width ?? base.min_name_width,
+    indicator: override.indicator ?? base.indicator,
     total: override.total ?? base.total,
   };
+}
+
+/**
+ * What a row shows in front of its name: its own `indicator`, else the one of
+ * its group (which already falls back to the legend's), else `box`.
+ *
+ * An icon mode without an icon degrades instead of leaving a gap: `icon` to
+ * the color box, so the row keeps its color, and `plain_icon` to nothing, since
+ * it was never meant to show a color.
+ */
+export function resolveIndicator(row: LegendRow, config: LegendConfig): IndicatorMode {
+  const mode = row.indicator ?? config.indicator ?? "box";
+  if (!row.icon) {
+    if (mode === "icon") {
+      return "box";
+    }
+    if (mode === "plain_icon") {
+      return "none";
+    }
+  }
+  return mode;
+}
+
+/** Whether a group needs the indicator column at all: some row shows something */
+export function needsIndicatorColumn(rows: LegendRow[], config: LegendConfig): boolean {
+  return rows.some((row) => resolveIndicator(row, config) !== "none");
 }
 
 /**

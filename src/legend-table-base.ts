@@ -19,13 +19,14 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import { styleMap } from "lit/directives/style-map.js";
 import type { HomeAssistant } from "custom-card-helpers";
 
-import { isDarkMode } from "./colors";
+import { ICON_FILL_ALPHA, isDarkMode, tintColor } from "./colors";
 import {
   DEFAULT_PRECISION,
   ResolvedConfigBase,
   ResolvedEntityBase,
 } from "./config/normalize-common";
 import type {
+  IndicatorMode,
   LegendConfig,
   LegendGroupResult,
   LegendRow,
@@ -39,6 +40,8 @@ import {
   computeTotal,
   formatValue,
   hidesValues,
+  needsIndicatorColumn,
+  resolveIndicator,
 } from "./legend-stats";
 import { legendStyles } from "./legend-styles";
 import { LinkController } from "./link/controller";
@@ -63,6 +66,11 @@ const LEGEND_PADDING = 24;
 const LEGEND_STANDALONE_MARGIN = 8;
 /** `row-gap` between the values of a row that had to stack them */
 const LEGEND_STACKED_GAP = 2;
+/** Height of the indicator per mode, where it is taller than a line (`.legend-icon.*`) */
+const INDICATOR_HEIGHT: Partial<Record<IndicatorMode, number>> = {
+  icon: 32,
+  plain_icon: 24,
+};
 
 /**
  * The `title:` heading. Styled by `ha-card` itself, not here: `.card-header`
@@ -87,7 +95,10 @@ const NOTICE_HEIGHT = 55;
    custom property, and because `_legendHeight()` has to reach the same verdict
    as the stylesheet. One source of truth, not two that can drift apart. */
 
-/** First grid column of `.legend-item`, holding the color swatch */
+/**
+ * First grid column of `.legend-item`, holding the color box or icon. A group
+ * in which no row shows either drops it (`.legend-group.no-indicator`).
+ */
 const LEGEND_ICON_COLUMN = 52;
 /** Column `gap` of `.legend-item` */
 const LEGEND_ITEM_GAP = 12;
@@ -435,7 +446,7 @@ export abstract class LegendTableBase<
 
   /** The stacking verdict of every group, used to spot a change on resize */
   private _narrowPerGroup(): boolean[] {
-    return this._groups().map((group) => this._isNarrow(group.config));
+    return this._groups().map((group) => this._isNarrow(group));
   }
 
   /* ---------------------------------------------------------------------- */
@@ -516,18 +527,27 @@ export abstract class LegendTableBase<
     }
 
     const columns = this._columns(group.config);
-    // 52px color cell + flexible name + one column per value
-    const gridColumns = `52px 1fr ${columns.map(() => "auto").join(" ")}`;
+    const indicatorColumn = needsIndicatorColumn(group.rows, group.config);
+    // 52px indicator cell (unless no row needs one) + flexible name + one column per value
+    const gridColumns = [
+      ...(indicatorColumn ? [`${LEGEND_ICON_COLUMN}px`] : []),
+      "1fr",
+      ...columns.map(() => "auto"),
+    ].join(" ");
     const visibleRows = group.rows.filter((row) => !this._links.isHidden(row.links));
     const total = this._total(group, visibleRows);
 
     return html`
-      <div class="legend-group${this._isNarrow(group.config) ? " narrow" : ""}">
+      <div
+        class="legend-group${this._isNarrow(group) ? " narrow" : ""}${indicatorColumn
+          ? ""
+          : " no-indicator"}"
+      >
         ${group.name ? html`<div class="legend-group-title">${group.name}</div>` : nothing}
         ${group.config.show_headers
           ? html`
               <div class="legend-headers" style="--ecl-columns: ${gridColumns}">
-                <span></span>
+                ${indicatorColumn ? html`<span></span>` : nothing}
                 <span></span>
                 ${columns.map(
                   (column) => html`<span class="legend-value">${this._columnLabel(column)}</span>`
@@ -535,7 +555,9 @@ export abstract class LegendTableBase<
               </div>
             `
           : nothing}
-        ${group.rows.map((row) => this._renderRow(row, group.config, columns, gridColumns))}
+        ${group.rows.map((row) =>
+          this._renderRow(row, group.config, columns, gridColumns, indicatorColumn)
+        )}
         ${total
           ? html`
               <div class="legend-total">
@@ -550,6 +572,38 @@ export abstract class LegendTableBase<
     `;
   }
 
+  /**
+   * The cell in front of the name: the color box, the icon on a circle of the
+   * row's color, the icon alone, or an empty cell. A hidden row keeps only the
+   * outline of the box or circle, the way it always kept only the box's border.
+   */
+  private _renderIndicator(row: LegendRow, config: LegendConfig, hidden: boolean) {
+    switch (resolveIndicator(row, config)) {
+      case "icon":
+        return html`<span
+          class="legend-icon badge"
+          style=${styleMap({
+            backgroundColor: hidden ? "transparent" : tintColor(row.color, ICON_FILL_ALPHA),
+            borderColor: hidden ? row.color : "transparent",
+            color: row.color,
+          })}
+          ><ha-icon .icon=${row.icon}></ha-icon
+        ></span>`;
+      case "plain_icon":
+        return html`<span class="legend-icon plain"><ha-icon .icon=${row.icon}></ha-icon></span>`;
+      case "none":
+        return html`<span></span>`;
+      default:
+        return html`<span
+          class="legend-icon"
+          style=${styleMap({
+            backgroundColor: hidden ? "transparent" : row.fillColor,
+            borderColor: row.color,
+          })}
+        ></span>`;
+    }
+  }
+
   /** The text of one value cell: a row's `text` verbatim, else the formatted number */
   private _cellText(row: LegendRow, column: string, precision: number, unit: string): string {
     if (row.text !== undefined) {
@@ -562,7 +616,8 @@ export abstract class LegendTableBase<
     row: LegendRow,
     config: LegendConfig,
     columns: string[],
-    gridColumns: string
+    gridColumns: string,
+    indicatorColumn: boolean
   ) {
     const hidden = this._links.isHidden(row.links);
     const precision = config.precision ?? row.precision ?? DEFAULT_PRECISION;
@@ -588,13 +643,7 @@ export abstract class LegendTableBase<
           }
         }}
       >
-        <span
-          class="legend-icon"
-          style=${styleMap({
-            backgroundColor: hidden ? "transparent" : row.fillColor,
-            borderColor: row.color,
-          })}
-        ></span>
+        ${indicatorColumn ? this._renderIndicator(row, config, hidden) : nothing}
         <span class="legend-name">${row.name}</span>
         ${valuesHidden
           ? columns.map(() => html`<span class="legend-value"></span>`)
@@ -635,21 +684,24 @@ export abstract class LegendTableBase<
     let blocks = 0;
 
     groups.forEach((group) => {
-      const narrow = this._isNarrow(group.config);
+      const narrow = this._isNarrow(group);
       // A stacking group puts every value on a line of its own beneath the name
       // and hides the header row entirely, so a row is `1 + columns` lines tall
       // rather than one — with the default single `sum` column already twice
       // the height, and with all four columns five times.
       const columns = this._columns(group.config).length;
-      const rowHeight = narrow
-        ? LEGEND_LINE_HEIGHT + columns * (LEGEND_LINE_HEIGHT + LEGEND_STACKED_GAP)
-        : LEGEND_LINE_HEIGHT;
+      const stacked = narrow ? columns * (LEGEND_LINE_HEIGHT + LEGEND_STACKED_GAP) : 0;
+      // An icon taller than a line makes the row's first line that tall.
+      const rowsHeight = group.rows.reduce((sum, row) => {
+        const indicator = INDICATOR_HEIGHT[resolveIndicator(row, group.config)] ?? 0;
+        return sum + Math.max(LEGEND_LINE_HEIGHT, indicator) + stacked;
+      }, 0);
 
       const heading = group.name ? 1 : 0;
       const headers = group.config.show_headers && !narrow ? 1 : 0;
       const total = group.config.total && group.config.total.mode !== "none" ? 1 : 0;
 
-      height += group.rows.length * rowHeight + (heading + headers + total) * LEGEND_LINE_HEIGHT;
+      height += rowsHeight + (heading + headers + total) * LEGEND_LINE_HEIGHT;
       blocks += group.rows.length + heading + headers + total;
     });
 
@@ -674,12 +726,16 @@ export abstract class LegendTableBase<
    * `getGridOptions()` on every render of the section and the section renders on
    * every `hass` update, so an over-reservation corrects itself within a second.
    */
-  private _isNarrow(config: LegendConfig): boolean {
+  private _isNarrow(group: LegendGroupResult): boolean {
     const cardWidth = this._measuredWidth();
     if (cardWidth === undefined) {
       return true;
     }
 
+    const { config } = group;
+    const indicator = needsIndicatorColumn(group.rows, config)
+      ? LEGEND_ICON_COLUMN + LEGEND_ITEM_GAP
+      : 0;
     const columns = this._columns(config).length;
     const minNameWidth =
       typeof config.min_name_width === "number" && config.min_name_width >= 0
@@ -687,8 +743,7 @@ export abstract class LegendTableBase<
         : DEFAULT_MIN_NAME_WIDTH;
 
     const required =
-      LEGEND_ICON_COLUMN +
-      LEGEND_ITEM_GAP +
+      indicator +
       minNameWidth +
       columns * (LEGEND_VALUE_WIDTH + LEGEND_ITEM_GAP);
 
