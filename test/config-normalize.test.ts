@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { columnsFor, normalizeConfig } from "../src/config/normalize";
+import { columnsFor, normalizeConfig } from "../src/config/normalize-statistics";
 import type { StatisticsLegendTableCardConfig } from "../src/config/types";
 
 const config = (

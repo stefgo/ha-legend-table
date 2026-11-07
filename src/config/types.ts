@@ -1,11 +1,13 @@
 /**
- * Configuration and row types for the Statistics Table and Legend card.
+ * Configuration and row types of the two legend table cards.
  *
- * Unlike the first version of this card, nothing here mirrors or forwards the
- * configuration of another card: `entities` defines what the legend shows,
- * `timespan`/`aggregation` define which statistics are fetched for it, and the
- * optional `card` / `link` blocks describe how the legend sits next to, and
- * talks to, an unrelated card.
+ * `statistics-legend-table` and `entity-legend-table` share everything but the
+ * source of their values: `legend`, `card` and `link` mean the same in both, and
+ * so do the common fields of an `entities` row. What differs is how a row names
+ * its value — a recorder statistic with a `timespan`/`aggregation`, or the live
+ * state of an entity.
+ *
+ * Nothing here mirrors or forwards the configuration of another card.
  */
 
 import type { LovelaceCardConfig } from "custom-card-helpers";
@@ -179,35 +181,26 @@ export interface CalculationConfig {
   unit?: string;
 }
 
-export interface EntityConfig {
-  /** Statistic entity shown in this row. Mutually exclusive with `calculation` */
-  statistic_id?: string;
-  /**
-   * Row computed from several statistics and constants instead of a single
-   * `statistic_id`. Evaluated bucket by bucket, so `min`/`max`/`avg` keep
-   * meaning what they mean for a plain statistic row.
-   */
-  calculation?: CalculationConfig;
+/** Fields every `entities` row has, whichever card it belongs to */
+export interface LegendEntityConfig {
   /**
    * Stable identifier of this row, used by `legend` selectors and by the link
-   * adapters. Defaults to `statistic_id` (or the first statistic of a
+   * adapters. Defaults to the row's statistic or entity (or the first one of a
    * `calculation`).
    */
   key?: string;
-  /** Row label, defaults to the statistic's name from its metadata */
+  /** Row label, defaults to the entity's friendly name or the statistic's name */
   name?: string;
   /**
    * Swatch color, defaults to the next color of the built-in palette. Pass
    * `{light: "...", dark: "..."}` to use a different color per theme mode.
    */
   color?: ColorConfig;
-  /** Statistic value read per bucket, defaults to `change` */
-  stat_type?: StatType;
-  /** Unit appended to the values, defaults to the unit from the statistic metadata */
+  /** Unit appended to the values, defaults to the statistic's or entity's unit */
   unit?: string;
-  /** Every bucket value is multiplied by this, applied before `add`. Defaults to 1 */
+  /** Every value is multiplied by this, applied before `add`. Defaults to 1 */
   multiply?: number;
-  /** Added to every bucket value after `multiply`. Defaults to 0 */
+  /** Added to every value after `multiply`. Defaults to 0 */
   add?: number;
   /** Row starts out hidden (and, with a link, hides its target too) */
   hidden_by_default?: boolean;
@@ -226,8 +219,23 @@ export interface EntityConfig {
   /**
    * When the row shows its value columns, defaults to `always`. Anything other
    * than `always` also takes the row out of `total: {mode: sum}`.
+   * `entity-legend-table` has no selection and accepts `always`/`never` only.
    */
   show_values?: ShowValuesMode;
+}
+
+/** One row of `statistics-legend-table` */
+export interface StatisticsEntityConfig extends LegendEntityConfig {
+  /** Statistic entity shown in this row. Mutually exclusive with `calculation` */
+  statistic_id?: string;
+  /**
+   * Row computed from several statistics and constants instead of a single
+   * `statistic_id`. Evaluated bucket by bucket, so `min`/`max`/`avg` keep
+   * meaning what they mean for a plain statistic row.
+   */
+  calculation?: CalculationConfig;
+  /** Statistic value read per bucket, defaults to `change` */
+  stat_type?: StatType;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -339,18 +347,23 @@ export interface LinkConfig {
 /* Card                                                                        */
 /* -------------------------------------------------------------------------- */
 
-export interface StatisticsLegendTableCardConfig extends LovelaceCardConfig {
+/** What both cards' configurations have in common */
+export interface LegendTableCardConfig extends LovelaceCardConfig {
   type: string;
   /** Card header rendered above everything else */
   title?: string;
   /** Any Lovelace card, rendered above the legend inside the same `ha-card` */
   card?: LovelaceCardConfig;
-  timespan?: TimespanConfig;
-  aggregation?: AggregationConfig;
-  entities?: EntityConfig[];
+  entities?: LegendEntityConfig[];
   legend?: LegendConfig;
   /** One link block, or several that all fire on a click */
   link?: LinkConfig | LinkConfig[];
+}
+
+export interface StatisticsLegendTableCardConfig extends LegendTableCardConfig {
+  timespan?: TimespanConfig;
+  aggregation?: AggregationConfig;
+  entities?: StatisticsEntityConfig[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -359,7 +372,7 @@ export interface StatisticsLegendTableCardConfig extends LovelaceCardConfig {
 
 /** One rendered legend row */
 export interface LegendRow {
-  /** Stable id, from `EntityConfig.key` */
+  /** Stable id, from `entities[].key` */
   id: string;
   name: string;
   /** Solid color, used for the swatch border */
@@ -373,10 +386,14 @@ export interface LegendRow {
   avg: number;
   /** Number of buckets that carried a value */
   count: number;
-  /** Targets passed to the link adapters, from `EntityConfig.link`; never empty */
+  /** Targets passed to the link adapters, from `entities[].link`; never empty */
   links: string[];
-  /** From `EntityConfig.show_values` */
+  /** From `entities[].show_values` */
   showValues: ShowValuesMode;
+  /** Shown verbatim in every value cell instead of a formatted number */
+  text?: string;
+  /** Decimal places of this row when the legend sets none */
+  precision?: number;
 }
 
 /** Rendered total row */

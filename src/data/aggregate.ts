@@ -11,7 +11,7 @@
 import type { HomeAssistant } from "custom-card-helpers";
 
 import { isDarkMode, resolveColor, withAlpha, SWATCH_FILL_ALPHA } from "../colors";
-import type { ResolvedCalculation, ResolvedEntity } from "../config/normalize";
+import type { ResolvedCalculation, ResolvedEntity } from "../config/normalize-statistics";
 import type {
   LegendConfig,
   LegendRow,

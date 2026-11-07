@@ -31,9 +31,11 @@ npm test           # vitest run
 
 ```
 src/index.ts                    card registration (window.customCards)
-src/statistics-legend-table.ts  LitElement: config, data flow, rendering, click handling
+src/legend-table-base.ts        shared LitElement: rendering, card:, links, sizing, click handling
+src/statistics-legend-table.ts  statistics card: timespan, fetch, graph selection
 src/config/types.ts             config and row types
-src/config/normalize.ts         setConfig validation and defaults
+src/config/normalize-common.ts  setConfig validation and defaults shared by both cards
+src/config/normalize-statistics.ts  validation of the statistics card
 src/data/timespan.ts            timespan modes -> {start, end} + bucket period
 src/data/energy-collection.ts   subscription to the energy date picker
 src/data/statistics.ts          recorder websocket calls
@@ -99,7 +101,7 @@ state — which is why a legend with no `link` block still greys out rows and st
 
 ### Data flow
 
-`setConfig()` → `normalizeConfig()` → `_restartTimespan()` picks the range source
+`setConfig()` (in `LegendTableBase`) → `normalizeConfig()` → `_onConfig()` → `_restartTimespan()` picks the range source
 (energy collection subscription / 60 s re-resolve / one-off) → `_setRange()` → `_fetch()` →
 `fetchStatistics()` → `buildRows()` → `buildLegendGroups()` → render.
 

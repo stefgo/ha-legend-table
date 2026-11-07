@@ -5,7 +5,7 @@ declare global {
 }
 
 import "./statistics-legend-table";
-import { CARD_NAME, CARD_VERSION } from "./version";
+import { CARD_VERSION, STATISTICS_CARD_NAME } from "./version";
 
 console.info(
   "%c STATISTICS-LEGEND-TABLE %c " + CARD_VERSION + " ",
@@ -15,7 +15,7 @@ console.info(
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: CARD_NAME,
+  type: STATISTICS_CARD_NAME,
   name: "Statistics Table and Legend",
   description:
     "Standalone legend with color, name and statistic values per row — optionally wrapped around any other card and linked to it.",

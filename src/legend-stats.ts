@@ -7,7 +7,7 @@
  * by which rows are currently hidden.
  */
 
-import { DEFAULT_PRECISION } from "./config/normalize";
+import { DEFAULT_PRECISION } from "./config/normalize-common";
 import type {
   LegendConfig,
   LegendGroupOverrides,
@@ -123,29 +123,39 @@ function sumRawStatistic(statistics: Statistics, statisticId: string, statType: 
   }, 0);
 }
 
-function sumRawStatistics(
-  statistics: Statistics,
-  statisticIds: string[],
-  statType: StatType
-): number {
-  return statisticIds.reduce((total, id) => total + sumRawStatistic(statistics, id, statType), 0);
+/**
+ * Sums the operands of a `total: {mode: ratio}`. Each card answers this from
+ * its own source: the statistics card from raw recorder buckets, the entity
+ * card from current states.
+ */
+export type RatioSum = (ids: string[], statType: StatType) => number;
+
+/** The `RatioSum` of the statistics card, over the raw buckets it fetched */
+export function statisticsRatioSum(statistics: Statistics): RatioSum {
+  return (statisticIds, statType) =>
+    statisticIds.reduce((total, id) => total + sumRawStatistic(statistics, id, statType), 0);
 }
 
 /**
  * Computes the closing total row.
  *
- * `mode: "sum"` sums the *visible* rows passed in. `mode: "ratio"` sums the raw
- * statistics of `total.numerator`/`total.denominator` directly — these name
- * `statistic_id`s, not legend rows, so a ratio also works for statistics that
- * never became a row of their own, and row visibility has no effect on it.
+ * `mode: "sum"` sums the *visible* rows passed in. `mode: "ratio"` sums the
+ * ids of `total.numerator`/`total.denominator` directly through `ratioSum` —
+ * these name statistics or entities, not legend rows, so a ratio also works for
+ * ids that never became a row of their own, and row visibility has no effect
+ * on it.
+ *
+ * `fallbackPrecision` is used for a sum when neither the total nor the legend
+ * sets a precision.
  *
  * Returns `undefined` when no total row should be rendered.
  */
 export function computeTotal(
   visibleRows: LegendRow[],
   config: LegendConfig,
-  statistics: Statistics,
-  localize: (key: string, fallback: string) => string
+  ratioSum: RatioSum,
+  localize: (key: string, fallback: string) => string,
+  fallbackPrecision: number = DEFAULT_PRECISION
 ): LegendTotal | undefined {
   const total: LegendTotalConfig | undefined = config.total;
   if (!total || total.mode === "none") {
@@ -154,8 +164,8 @@ export function computeTotal(
 
   if (total.mode === "ratio") {
     const statType = total.stat_type ?? "change";
-    const numerator = sumRawStatistics(statistics, total.numerator ?? [], statType);
-    const denominator = sumRawStatistics(statistics, total.denominator ?? [], statType);
+    const numerator = ratioSum(total.numerator ?? [], statType);
+    const denominator = ratioSum(total.denominator ?? [], statType);
 
     return {
       name:
@@ -169,7 +179,7 @@ export function computeTotal(
 
   // mode "sum" (default)
   const rows = visibleRows.filter((row) => !isExcludedFromValues(row));
-  const precision = config.precision ?? DEFAULT_PRECISION;
+  const precision = config.precision ?? fallbackPrecision;
   const value = rows.reduce((sum, row) => sum + row.sum, 0);
   const units = new Set(rows.map((row) => row.unit).filter((unit) => unit));
 
