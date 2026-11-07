@@ -1,6 +1,6 @@
 {
   "name": "statistics-legend-table",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Standalone Home Assistant Lovelace legend card with its own statistics, optionally wrapping and linking to any other card",
   "type": "module",
   "main": "dist/statistics-legend-table.js",

@@ -9,7 +9,3 @@ dev keeps the text; the stable release from main empties this file again.
 
 Nothing inside an HTML comment is published.
 -->
-
-### Fixes
-
-- A legend without an embedded `card:` now has the same spacing above its first row as other cards (16 px instead of 8 px).

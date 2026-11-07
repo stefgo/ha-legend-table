@@ -8,6 +8,16 @@ An entry is put together by the release workflow: the text written by hand in
 are added to the release page and do not belong in an entry. The entries up to
 0.5.3 were written by hand as a whole.
 
+## [0.5.5](https://github.com/stefgo/ha-statistics-legend-table/compare/v0.5.4...v0.5.5) (2026-11-07)
+
+### Fixes
+
+- A legend without an embedded `card:` now has the same spacing above its first row as other cards (16 px instead of 8 px).
+
+### Bug Fixes
+
+* use 16px top margin for legend without embedded card ([ac31e20](https://github.com/stefgo/ha-statistics-legend-table/commit/ac31e20bad1f0b4ba366e5f5e6239f4880192a8d))
+
 ## [0.5.4](https://github.com/stefgo/ha-statistics-legend-table/compare/v0.5.3...v0.5.4) (2026-10-10)
 
 ### Fixed
