@@ -34,6 +34,7 @@ export class LinkController {
   /** Fallback state for rows no adapter has an opinion about */
   private _hidden = new Set<string>();
   private _notify: () => void;
+  private _moreInfo = false;
 
   constructor(notify: () => void) {
     this._notify = notify;
@@ -45,7 +46,19 @@ export class LinkController {
     this._adapters = links
       .map(createAdapter)
       .filter((adapter): adapter is LinkAdapter => Boolean(adapter));
-    this._hidden = new Set(hiddenByDefault);
+    this._moreInfo = links.some((link) => link.mode === "more-info");
+    // A click never hides a row in `more-info` mode, so a row hidden from the
+    // start could never come back.
+    this._hidden = this._moreInfo ? new Set() : new Set(hiddenByDefault);
+  }
+
+  /**
+   * Whether a click opens the entity dialog instead of hiding the row. The card
+   * handles that click itself — there is nothing to toggle, so `toggle()` is
+   * not called and no row is ever hidden.
+   */
+  public opensMoreInfo(): boolean {
+    return this._moreInfo;
   }
 
   /**

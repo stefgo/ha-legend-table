@@ -92,6 +92,10 @@ state — which is why a legend with no `link` block still greys out rows and st
   `statistics-legend-table:state` protocol on `window` (not a bubbling DOM event — the target card
   is a sibling, not an ancestor). Changing this protocol is a breaking change; it is documented
   in the README for third parties.
+- `link: {mode: more-info}` has no adapter: nothing outside the card is toggled. The controller
+  only reports it (`opensMoreInfo()`), and the card then fires Home Assistant's `hass-more-info`
+  event for the row's `moreInfoEntity` instead of calling `toggle()` — so no row is ever hidden.
+  It cannot be combined with another mode (`resolveLinks()` refuses the config).
 
 ### Data flow
 

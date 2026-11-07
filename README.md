@@ -89,7 +89,7 @@ Only [`entities`](#entities--the-rows) is required; everything else has a sensib
 | `legend`      | object        | –                | Presentation of the legend — see [`legend`](#legend--how-the-rows-look) |
 | `aggregation` | object        | `{period: auto}` | Bucket size of the statistics query — see [`aggregation`](#aggregation--bucket-size) |
 | `card`        | object        | –                | Any Lovelace card, rendered above the legend — see [`card`](#embedding-another-card-card) |
-| `link`        | object / list | –                | Coupling to another component — see [`link`](#linking-another-component-link) |
+| `link`        | object / list | –                | What a click on a row does: couple another component or open the entity dialog — see [`link`](#linking-another-component-link) |
 
 ### `entities` — the rows
 
@@ -105,8 +105,8 @@ Each entry becomes one legend row, in the order given here.
 | `multiply` / `add`  | number          | `1` / `0`      | Linear conversion per bucket (`value * multiply + add`) |
 | `calculation`       | object          | –              | Compute the row from several statistics/constants, see [Calculated rows](#calculated-rows) |
 | `key`               | string          | `statistic_id` | Stable ID of the row, used by [`legend.groups`](#legendgroups) selectors and by [`link`](#linking-another-component-link) |
-| `link`              | string / list   | `key`          | Target(s) in the coupled component, see [`link`](#linking-another-component-link) |
-| `hidden_by_default` | bool            | `false`        | Row (and its link target) starts hidden |
+| `link`              | string / list   | `key`          | Target(s) in the coupled component, see [`link`](#linking-another-component-link). [`more-info`](#mode-more-info): the entity whose dialog opens, default `statistic_id` |
+| `hidden_by_default` | bool            | `false`        | Row (and its link target) starts hidden. Ignored with [`more-info`](#mode-more-info) |
 | `show_values`       | string          | `always`       | When the row shows values, see [When a row shows values](#when-a-row-shows-values-show_values) |
 
 #### Per-theme colors
@@ -371,12 +371,14 @@ own `ha-card` is visually neutralized so that graph and legend sit on one surfac
 
 ## Linking another component: `link`
 
-`link` defines what a click on a legend row does outside the card. Without `link`, the legend only
-hides its own row (which also affects [`total: {mode: sum}`](#legendtotal)).
+`link` defines what a click on a legend row does. Without `link`, the legend only hides its own row
+(which also affects [`total: {mode: sum}`](#legendtotal)). The modes `chart`, `entity` and `event`
+additionally hide a target outside the card; [`more-info`](#mode-more-info) opens Home Assistant's
+entity dialog instead and never hides the row.
 
 | Option         | Type   | Default                | Description |
 | -------------- | ------ | ---------------------- | ----------- |
-| `mode`         | string | `none`                 | [`chart`](#mode-chart), [`entity`](#mode-entity), [`event`](#mode-event) or `none` |
+| `mode`         | string | `none`                 | [`chart`](#mode-chart), [`entity`](#mode-entity), [`event`](#mode-event), [`more-info`](#mode-more-info) or `none` |
 | `service`      | string | `homeassistant.toggle` | `entity` only |
 | `hidden_state` | string | `off`                  | `entity` only: which state counts as “hidden” |
 | `link_id`      | string | –                      | `event` only: identifies this legend in the events |
@@ -388,8 +390,10 @@ Which mechanism to pick:
 | [`chart`](#mode-chart)      | Any card drawing on Home Assistant's `ha-chart-base` inside the `card:` block — the usual case |
 | [`entity`](#mode-entity)    | Everything else: an `input_boolean` plus a `conditional` card. Survives a reload |
 | [`event`](#mode-event)      | Your own JavaScript, or cards supporting this card natively |
+| [`more-info`](#mode-more-info) | Showing the history of a row's entity instead of hiding the row |
 
-`link` may also be a **list** of blocks; all mechanisms then fire at once.
+`link` may also be a **list** of blocks; all mechanisms then fire at once. `more-info` is the
+exception: it cannot be combined with another mode.
 
 Which row addresses which target is set on the row itself in [`entities[].link`](#entities--the-rows)
 (default: the row's `key`). `entities[].link` may also be a list — one legend row then controls
@@ -527,6 +531,30 @@ window.dispatchEvent(new CustomEvent("statistics-legend-table:state", {
 ```
 
 `link_id` has to match so that several legends can work side by side on one dashboard.
+
+### `mode: more-info`
+
+A click opens Home Assistant's own entity dialog (more-info) with its history graph, the same
+dialog a click on an entity opens elsewhere. The row is not greyed out and
+[`total: {mode: sum}`](#legendtotal) does not change.
+
+```yaml
+link:
+  mode: more-info
+entities:
+  - statistic_id: sensor.car_range        # opens sensor.car_range
+  - key: odometer
+    statistic_id: sensor.odometer_copy
+    link: sensor.odometer                 # opens a different entity
+```
+
+The dialog shows one entity per row: the first entry of [`entities[].link`](#entities--the-rows)
+if set, otherwise the row's `statistic_id` — not its `key` as in the other modes. For a
+[calculated row](#calculated-rows) that is the first statistic of the calculation. A row whose
+target is not an entity ID, such as an external statistic (`domain:name`), is not clickable.
+
+Since a click never hides a row, `hidden_by_default` is ignored in this mode.
+`more-info` cannot be combined with another mode in a `link` list.
 
 ---
 
