@@ -160,7 +160,7 @@ What a row shows in front of its name. Set it for every row in
 | ------------ | -------------------- | ---------- |
 | `box`        | the color box (default) | only the outline of the box |
 | `icon`       | the row's `icon` in its color, on a faint circle of the same color | only the outline of the circle |
-| `plain_icon` | the row's `icon` in the normal text color, without any color | the icon turns grey |
+| `plain_icon` | the row's `icon` in Home Assistant's icon color (`--state-icon-color`), not in the row's color | the icon turns grey |
 | `none`       | nothing | |
 
 ```yaml

@@ -115,7 +115,7 @@ export const legendStyles = css`
     justify-content: center;
     --mdc-icon-size: 18px;
   }
-  /* \`indicator: plain_icon\`: the icon alone, in the text color */
+  /* \`indicator: plain_icon\`: the icon alone, in Home Assistant's icon color */
   .legend-icon.plain {
     height: 24px;
     border: none;
@@ -123,7 +123,7 @@ export const legendStyles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--primary-text-color);
+    color: var(--state-icon-color, #44739e);
     --mdc-icon-size: 24px;
   }
   .legend-item.hidden .legend-icon.plain {
