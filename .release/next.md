@@ -25,3 +25,10 @@ its `icon`, for example `mdi:solar-power`. The entity card uses the entity's own
 sets none. A row set to `icon` without an icon keeps its color box.
 
 Existing dashboards look exactly as before; nothing needs to change on upgrade.
+
+### Changed
+
+- `indicator: plain_icon` shows the icon in Home Assistant's icon color
+  (`--state-icon-color`, blue by default) instead of the text color, like the
+  icons of the built-in entity rows. A theme that sets `--state-icon-color`
+  changes it too.

@@ -37,7 +37,8 @@ export const ALL_SHOW_VALUES_MODES: ShowValuesMode[] = ["always", "never", "sele
  *
  * - `box`: the color box (default)
  * - `icon`: the row's icon in its color, on a faint circle of the same color
- * - `plain_icon`: the row's icon in the normal text color, without any color
+ * - `plain_icon`: the row's icon in Home Assistant's icon color
+ *   (`--state-icon-color`), not in the row's color
  * - `none`: nothing; the column is dropped where no row of a group needs it
  *
  * `icon` without an icon falls back to `box`, `plain_icon` to `none`.
