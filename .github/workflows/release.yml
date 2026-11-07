@@ -60,9 +60,9 @@ jobs:
       breaking: minor
       # dist/ is not committed; the bundle is built here, after package.json
       # carries the new version and before the commit and the tag, so a failing
-      # build leaves neither behind. STATSTABLE_MINIFY is release-only: local builds
+      # build leaves neither behind. LEGENDTABLE_MINIFY is release-only: local builds
       # stay readable.
       build_command: |
         npm ci
-        STATSTABLE_MINIFY=1 npm run build
-      release_assets: dist/statistics-legend-table.js
+        LEGENDTABLE_MINIFY=1 npm run build
+      release_assets: dist/legend-table.js

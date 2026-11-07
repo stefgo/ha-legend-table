@@ -4,23 +4,29 @@ Guidance for Claude Code when working in this repository.
 
 ## Project overview
 
-`statistics-legend-table` is a standalone Home Assistant Lovelace card
-(`custom:statistics-legend-table`) rendering a legend in the style of the built-in energy
-cards: one row per statistic with a color swatch, name and aggregated values, clickable, plus an
-optional total/ratio row.
+`ha-legend-table` is one bundle (`dist/legend-table.js`) with two standalone Home Assistant
+Lovelace cards rendering a legend in the style of the built-in energy cards: one row per value
+with a color swatch, name and value, clickable, plus an optional total/ratio row.
 
-**The defining constraint of this project: the card must not depend on any other card.** It
-never wraps a foreign card to reach its data, never forwards its config to one, and never reads
+- `custom:statistics-legend-table` — recorder statistics over a timespan (sum/min/max/avg).
+- `custom:entity-legend-table` — live entity state (or an attribute, or a calculation).
+
+Both share one element, `LegendTableBase`; they differ only in their data source. The project
+was called `ha-statistics-legend-table` up to 0.6; the statistics card kept its type name so
+existing dashboards keep working.
+
+**The defining constraint of this project: the cards must not depend on any other card.** They
+never wrap a foreign card to reach its data, never forward their config to one, and never read
 another element's TypeScript-`private` fields. Keep it that way:
 
-- The card fetches its own statistics from the recorder (`src/data/`).
-- Its config describes the legend and nothing else — no options are forwarded to another card.
+- The cards read their own values — the recorder or `hass.states` (`src/data/`).
+- Their config describes the legend and nothing else — no options are forwarded to another card.
 - Everything card-specific lives behind an adapter in `src/link/`.
 
 ## Commands
 
 ```bash
-npm run build      # Rollup → dist/statistics-legend-table.js
+npm run build      # Rollup → dist/legend-table.js
 npm run watch      # rebuild on change
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint (npm run lint:fix to autofix)
@@ -31,13 +37,18 @@ npm test           # vitest run
 
 ```
 src/index.ts                    card registration (window.customCards)
-src/statistics-legend-table.ts  LitElement: config, data flow, rendering, click handling
+src/legend-table-base.ts        shared LitElement: rendering, card:, links, sizing, click handling
+src/statistics-legend-table.ts  statistics card: timespan, fetch, graph selection
+src/entity-legend-table.ts      entity card: rows rebuilt from hass.states on every watched change
 src/config/types.ts             config and row types
-src/config/normalize.ts         setConfig validation and defaults
+src/config/normalize-common.ts  setConfig validation and defaults shared by both cards
+src/config/normalize-statistics.ts  validation of the statistics card
+src/config/normalize-entity.ts  validation of the entity card
 src/data/timespan.ts            timespan modes -> {start, end} + bucket period
 src/data/energy-collection.ts   subscription to the energy date picker
 src/data/statistics.ts          recorder websocket calls
 src/data/aggregate.ts           buckets -> LegendRow (sum/min/max/avg)
+src/data/live.ts                current state -> LegendRow (entity card)
 src/colors.ts                   palette + swatch fill derivation
 src/legend-stats.ts             grouping, ordering, total row, number formatting
 src/legend-styles.ts            legend CSS
@@ -47,11 +58,14 @@ src/link/                       the three link adapters + controller + graph sel
 
 ### Three independent axes
 
-The card's design keeps three concerns strictly apart. When adding a feature, work out which
+The design keeps three concerns strictly apart. When adding a feature, work out which
 axis it belongs on:
 
-1. **Data** (`src/data/`) — what the legend shows. Driven only by `entities`, `timespan` and
-   `aggregation`. Never reads anything outside the recorder API.
+1. **Data** (`src/data/`) — what the legend shows, and the only axis on which the two cards
+   differ. The statistics card is driven only by `entities`, `timespan` and `aggregation` and
+   never reads anything outside the recorder API; the entity card reads `hass.states` (and
+   `hass.entities` for the display precision) and nothing else. Everything a subclass of
+   `LegendTableBase` contributes is a hook of the base: rows, columns, cell value, ratio source.
 2. **Layout** (`wrapped-card.ts`) — the optional `card:` block, created through
    `loadCardHelpers().createCardElement()` so *any* Lovelace card works. Its config is passed
    through untouched; this card neither reads nor rewrites it.
@@ -88,8 +102,8 @@ state — which is why a legend with no `link` block still greys out rows and st
   a second graph on the view is ignored. The
   values are refetched for that period, so every column, calculated rows and both total modes
   follow it through the normal data flow.
-- `event-adapter.ts` implements the documented `statistics-legend-table:toggle` /
-  `statistics-legend-table:state` protocol on `window` (not a bubbling DOM event — the target card
+- `event-adapter.ts` implements the documented `legend-table:toggle` /
+  `legend-table:state` protocol on `window` (not a bubbling DOM event — the target card
   is a sibling, not an ancestor). Changing this protocol is a breaking change; it is documented
   in the README for third parties.
 - `link: {mode: more-info}` has no adapter: nothing outside the card is toggled. The controller
@@ -99,7 +113,7 @@ state — which is why a legend with no `link` block still greys out rows and st
 
 ### Data flow
 
-`setConfig()` → `normalizeConfig()` → `_restartTimespan()` picks the range source
+`setConfig()` (in `LegendTableBase`) → `normalizeConfig()` → `_onConfig()` → `_restartTimespan()` picks the range source
 (energy collection subscription / 60 s re-resolve / one-off) → `_setRange()` → `_fetch()` →
 `fetchStatistics()` → `buildRows()` → `buildLegendGroups()` → render.
 
@@ -111,6 +125,13 @@ Raw statistics are kept in `_statistics` alongside the rows because `legend.tota
 deliberately bypasses rows entirely: it sums the named `statistic_id`s directly, so it also
 covers statistics that never became a row, and row visibility has no effect on it. `mode: sum`
 in contrast sums the *visible* rows.
+
+The entity card has no fetch: `_watchEntities()` hands every entity its rows and ratio totals
+read to the base, whose `shouldUpdate()` lets a `hass` update through only when one of them
+changed, and `willUpdate()` then rebuilds the rows from `hass.states` (`buildLiveRows()`). A live
+row carries its one value in `sum`/`min`/`max`/`avg`; a text state or a missing value is put in
+`LegendRow.text`, which the base renders verbatim and which keeps the row out of a sum total.
+Calculated rows reuse `evaluateCalculation()` with one pseudo bucket per term.
 
 `aggregation.period` is not just a performance knob — `min`/`max`/`avg` are computed per bucket,
 so the period decides what those columns mean. `auto` mirrors Home Assistant's own rule.

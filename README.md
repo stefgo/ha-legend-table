@@ -1,22 +1,29 @@
-# Statistics Table and Legend Card for Home Assistant
+# Legend Table Cards for Home Assistant
 
-[![Release](https://img.shields.io/github/v/release/stefgo/ha-statistics-legend-table?style=flat-square)](https://github.com/stefgo/ha-statistics-legend-table/releases)
+[![Release](https://img.shields.io/github/v/release/stefgo/ha-legend-table?style=flat-square)](https://github.com/stefgo/ha-legend-table/releases)
 [![HACS: custom](https://img.shields.io/badge/HACS-custom-41BDF5?style=flat-square)](https://hacs.xyz/)
 [![Home Assistant 2025.2+](https://img.shields.io/badge/Home%20Assistant-2025.2%2B-41BDF5?style=flat-square)](https://www.home-assistant.io/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/stefgo/ha-statistics-legend-table/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/stefgo/ha-legend-table/blob/main/LICENSE)
 
-A Lovelace card that renders a legend in the style of the built-in energy cards: one row per
-statistic with a color indicator, a name and aggregated values, clickable, plus an optional total
-or self-sufficiency row underneath.
+Two Lovelace cards that render a legend in the style of the built-in energy cards: one row per
+value with a color indicator, a name and the value, clickable, plus an optional total or
+self-sufficiency row underneath. They differ only in where the values come from:
 
-The card fetches its data from the recorder **itself** and therefore works on its own. On top of
-that it can:
+| Card                                | Shows |
+| ----------------------------------- | ----- |
+| `custom:statistics-legend-table`    | **Statistics** from the recorder over a timespan — sum, min, max, average |
+| `custom:entity-legend-table`        | **Live values**: the current state of each entity, see [Live values](#live-values-entity-legend-table) |
 
-- render **any other Lovelace card** above itself — see [`card`](#embedding-another-card-card);
+Both fetch their data **themselves** and therefore work on their own. On top of that they can:
+
+- render **any other Lovelace card** above themselves — see [`card`](#embedding-another-card-card);
 - **show and hide another component** when a row is clicked — see [`link`](#linking-another-component-link);
-- **follow a period selected in an embedded graph** — see [`follow_selection`](#following-a-graph-selection).
+- **follow a period selected in an embedded graph** (statistics card) — see [`follow_selection`](#following-a-graph-selection).
 
-![One ha-card combining Statistics Extended Graph and Statistics Table and Legend: a stacked energy chart on top, five legend rows with their sums underneath, closed by a self-sufficiency total row](https://raw.githubusercontent.com/stefgo/ha-statistics-legend-table/main/screenshots/statistics-legend-with-custom-graph.png)
+Everything below describes the statistics card first; the [entity card](#live-values-entity-legend-table)
+section lists what differs. `legend`, `card` and `link` are the same in both.
+
+![One ha-card combining Statistics Extended Graph and the statistics legend table: a stacked energy chart on top, five legend rows with their sums underneath, closed by a self-sufficiency total row](https://raw.githubusercontent.com/stefgo/ha-legend-table/main/screenshots/statistics-legend-with-custom-graph.png)
 
 *Both cards combined in one `ha-card`: a
 [Statistics Extended Graph](https://github.com/stefgo/ha-statistics-extended-graph) chart embedded
@@ -26,30 +33,48 @@ via [`card`](#embedding-another-card-card), with this card's five statistics and
 ## Contents
 
 - [Installation](#installation)
+  - [Upgrading from `ha-statistics-legend-table`](#upgrading-from-ha-statistics-legend-table)
 - [Quick start](#quick-start)
 - [Configuration](#configuration)
   - [`entities` — the rows](#entities--the-rows)
   - [`timespan` — which range is shown](#timespan--which-range-is-shown)
   - [`legend` — how the rows look](#legend--how-the-rows-look)
   - [`aggregation` — bucket size](#aggregation--bucket-size)
+- [Live values: `entity-legend-table`](#live-values-entity-legend-table)
 - [Embedding another card: `card`](#embedding-another-card-card)
 - [Linking another component: `link`](#linking-another-component-link)
 - [Development](#development)
 
 ## Installation
 
-1. Add this repository to HACS as a “custom repository” (category *Lovelace*) and install it — or
-   copy `dist/statistics-legend-table.js` manually to
-   `config/www/community/ha-statistics-legend-table/`.
+1. Add `stefgo/ha-legend-table` to HACS as a “custom repository” (category *Dashboard*) and
+   install it — or copy `legend-table.js` from the release assets manually to
+   `config/www/community/ha-legend-table/`.
 2. Register the resource:
 
 ```yaml
-url: /hacsfiles/ha-statistics-legend-table/statistics-legend-table.js
+url: /hacsfiles/ha-legend-table/legend-table.js
 type: module
 ```
 
-There is **no** requirement on any other card. `statistics-extended-graph`, `power-flow-card-plus`
-& co. are only needed if you actually want to embed them.
+The one file registers both cards. There is **no** requirement on any other card.
+`statistics-extended-graph`, `power-flow-card-plus` & co. are only needed if you actually want to
+embed them.
+
+### Upgrading from `ha-statistics-legend-table`
+
+The project used to be called `ha-statistics-legend-table`. The card type
+`custom:statistics-legend-table` and every option are unchanged, so **dashboards keep working as
+they are**. What changed is where the card is installed from:
+
+1. In HACS, remove the custom repository `stefgo/ha-statistics-legend-table` and add
+   `stefgo/ha-legend-table` instead, then install “Legend Table Cards”.
+2. Under *Settings → Dashboards → Resources*, delete the old resource
+   `/hacsfiles/ha-statistics-legend-table/statistics-legend-table.js` and make sure
+   `/hacsfiles/ha-legend-table/legend-table.js` is registered. Leaving both would load the card
+   twice.
+3. If you use [`link: {mode: event}`](#mode-event) from your own JavaScript: the events are now
+   called `legend-table:toggle` and `legend-table:state`.
 
 ## Quick start
 
@@ -336,6 +361,104 @@ With `period: day`, `Max` is therefore the strongest day; with `period: hour` th
 
 ---
 
+## Live values: `entity-legend-table`
+
+`custom:entity-legend-table` is the same legend over **current values** instead of statistics: one
+row per entity with its state right now, updated the moment the state changes. It needs no
+recorder and no timespan. [`legend`](#legend--how-the-rows-look),
+[`card`](#embedding-another-card-card) and [`link`](#linking-another-component-link) work exactly as
+described for the statistics card.
+
+```yaml
+type: custom:entity-legend-table
+title: Power now
+entities:
+  - entity: sensor.solar_power
+    name: Solar
+    color: "#ff9800"
+  - entity: sensor.grid_power
+    name: Grid
+    color: "#488fc2"
+  - entity: climate.living_room
+    attribute: current_temperature
+    name: Living room
+    unit: °C
+legend:
+  total:
+    mode: sum
+```
+
+| Option     | Type          | Default      | Description |
+| ---------- | ------------- | ------------ | ----------- |
+| `type`     | string        | –            | `custom:entity-legend-table` |
+| `entities` | list          | **required** | The rows, see below |
+| `title`    | string        | –            | Card heading |
+| `legend`   | object        | –            | As for the statistics card, except `columns`: a row has one value |
+| `card`     | object        | –            | [Any Lovelace card](#embedding-another-card-card) above the legend |
+| `link`     | object / list | –            | [What a click does](#linking-another-component-link) |
+
+Each row:
+
+| Option              | Type            | Default                          | Description |
+| ------------------- | --------------- | -------------------------------- | ----------- |
+| `entity`            | string          | –                                | Entity shown in this row. Required unless `calculation` is used |
+| `attribute`         | string          | –                                | Show this attribute instead of the state |
+| `calculation`       | object          | –                                | Compute the row from several entities, see below |
+| `name`              | string          | friendly name                    | Label |
+| `color`             | string / object | palette                          | As for the [statistics card](#per-theme-colors) |
+| `unit`              | string          | `unit_of_measurement`            | Unit after the value. An attribute has no unit unless this is set |
+| `multiply` / `add`  | number          | `1` / `0`                        | Linear conversion (`value * multiply + add`) |
+| `key`               | string          | `entity`                         | Stable ID of the row for [`legend.groups`](#legendgroups) and [`link`](#linking-another-component-link) |
+| `link`              | string / list   | `key`                            | As for the statistics card; [`more-info`](#mode-more-info) opens `entity` by default |
+| `hidden_by_default` | bool            | `false`                          | Row starts hidden |
+| `show_values`       | string          | `always`                         | `always` or `never` — there is no selection here |
+
+What a row shows:
+
+- **A number** is shown with `legend.precision` decimal places, or — without it — with the
+  display precision set for the entity in Home Assistant, otherwise 2.
+- **A text state** such as `on` or `heat` is shown as Home Assistant shows it, translated. It
+  takes no part in a sum.
+- **`unavailable`, `unknown`** or a missing entity is shown as `—` and left out of the sum;
+  `hide_zero` hides such a row.
+
+**Calculated rows** take the same `calculation` block as the
+[statistics card](#calculated-rows), with `entity` (and optionally `attribute`) in place of
+`statistic_id` and without `stat_type`. The terms are applied to the current values in
+configuration order. If one of the entities has no number, or a division by 0 occurs, the row
+shows `—` instead of a value computed from an incomplete set.
+
+```yaml
+entities:
+  - key: house
+    name: House
+    calculation:
+      unit: W
+      terms:
+        - entity: sensor.grid_power
+        - entity: sensor.solar_power
+        - entity: sensor.grid_export_power
+          operation: subtract
+```
+
+**[`legend.total`](#legendtotal)**: `mode: sum` adds up the visible rows with a number; without a
+`precision` it uses the finest precision of those rows. In `mode: ratio`, `numerator` and
+`denominator` list **entity IDs** whose current states are summed; `stat_type` does not apply.
+
+```yaml
+legend:
+  total:
+    name: Self-sufficiency now
+    mode: ratio
+    numerator: [sensor.solar_power]
+    denominator: [sensor.house_power]
+```
+
+Options of the statistics card that have no meaning here (`timespan`, `aggregation`, `stat_type`,
+`legend.columns`) are ignored, so a configuration copied over still renders.
+
+---
+
 ## Embedding another card: `card`
 
 `card` takes **any** Lovelace card configuration and renders it above the legend inside the same
@@ -511,7 +634,7 @@ link:
 **Dispatched** on every click:
 
 ```js
-window.addEventListener("statistics-legend-table:toggle", (ev) => {
+window.addEventListener("legend-table:toggle", (ev) => {
   ev.detail; // { link_id: "energyflow", target: "sensor.grid_import", hidden: true }
 });
 ```
@@ -520,12 +643,12 @@ window.addEventListener("statistics-legend-table:toggle", (ev) => {
 
 ```js
 // single target
-window.dispatchEvent(new CustomEvent("statistics-legend-table:state", {
+window.dispatchEvent(new CustomEvent("legend-table:state", {
   detail: { link_id: "energyflow", target: "sensor.grid_import", hidden: true },
 }));
 
 // or the complete set of hidden targets
-window.dispatchEvent(new CustomEvent("statistics-legend-table:state", {
+window.dispatchEvent(new CustomEvent("legend-table:state", {
   detail: { link_id: "energyflow", hidden: ["sensor.grid_import"] },
 }));
 ```
@@ -562,12 +685,12 @@ Since a click never hides a row, `hidden_by_default` is ignored in this mode.
 
 ```bash
 npm install
-npm run build     # → dist/statistics-legend-table.js
+npm run build     # → dist/legend-table.js
 npm run watch     # rebuild on change
 npm run typecheck
 ```
 
-Released versions are documented in [CHANGELOG.md](https://github.com/stefgo/ha-statistics-legend-table/blob/main/CHANGELOG.md).
+Released versions are documented in [CHANGELOG.md](https://github.com/stefgo/ha-legend-table/blob/main/CHANGELOG.md).
 
 ## License
 

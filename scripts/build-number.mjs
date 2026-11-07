@@ -10,7 +10,7 @@
  * The counter is local to the working copy (`.build-number` is not committed):
  * it answers "is this the bundle I just built?", not "which build is this
  * across machines". It is therefore opt-in — only `builddeploy.sh` asks for it
- * (`STATSTABLE_BUILD_COUNTER=1`). A plain `npm run build`, and with it the
+ * (`LEGENDTABLE_BUILD_COUNTER=1`). A plain `npm run build`, and with it the
  * release workflow on GitHub, reports the bare semver.
  *
  * This is not a code generator — rollup replaces the placeholders in
@@ -22,7 +22,7 @@ const BUILD_NUMBER_FILE = ".build-number";
 
 /** True when this build should carry a local build counter */
 export function wantsBuildNumber() {
-  const flag = process.env.STATSTABLE_BUILD_COUNTER;
+  const flag = process.env.LEGENDTABLE_BUILD_COUNTER;
   return flag !== undefined && flag !== "" && flag !== "0";
 }
 

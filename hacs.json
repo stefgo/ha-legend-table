@@ -1,7 +1,7 @@
 {
-  "name": "Statistics Table and Legend Card",
+  "name": "Legend Table Cards",
   "content_in_root": false,
   "render_readme": true,
   "homeassistant": "2025.2.0",
-  "filename": "statistics-legend-table.js"
+  "filename": "legend-table.js"
 }
