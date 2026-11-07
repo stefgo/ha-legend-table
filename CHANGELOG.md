@@ -8,6 +8,28 @@ An entry is put together by the release workflow: the text written by hand in
 are added to the release page and do not belong in an entry. The entries up to
 0.5.3 were written by hand as a whole.
 
+## [1.1.0](https://github.com/stefgo/ha-legend-table/compare/v1.0.0...v1.1.0) (2026-11-07)
+
+### Icons in the legend
+
+A row can now show an icon instead of the color box. The new `indicator` option decides what
+appears in front of the name:
+
+- `box`: the color box, as before (default)
+- `icon`: the icon in the row's color, on a faint circle of the same color
+- `plain_icon`: the icon alone, in the normal text color, without any color
+- `none`: nothing
+
+Set it once for the whole legend (`legend.indicator`), per group, or per row, and give each row
+its `icon`, for example `mdi:solar-power`. The entity card uses the entity's own icon when a row
+sets none. A row set to `icon` without an icon keeps its color box.
+
+Existing dashboards look exactly as before; nothing needs to change on upgrade.
+
+### Features
+
+* add indicator and icon options for legend rows ([c10be1d](https://github.com/stefgo/ha-legend-table/commit/c10be1d63fd594ba5b354fbd9eae00c2cd67aad6))
+
 ## [1.0.0](https://github.com/stefgo/ha-legend-table/compare/v0.6.0...v1.0.0) (2026-11-07)
 
 ### New name: `ha-legend-table`

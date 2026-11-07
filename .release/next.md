@@ -9,19 +9,3 @@ dev keeps the text; the stable release from main empties this file again.
 
 Nothing inside an HTML comment is published.
 -->
-
-### Icons in the legend
-
-A row can now show an icon instead of the color box. The new `indicator` option decides what
-appears in front of the name:
-
-- `box`: the color box, as before (default)
-- `icon`: the icon in the row's color, on a faint circle of the same color
-- `plain_icon`: the icon alone, in the normal text color, without any color
-- `none`: nothing
-
-Set it once for the whole legend (`legend.indicator`), per group, or per row, and give each row
-its `icon`, for example `mdi:solar-power`. The entity card uses the entity's own icon when a row
-sets none. A row set to `icon` without an icon keeps its color box.
-
-Existing dashboards look exactly as before; nothing needs to change on upgrade.
