@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 import { tintColor } from "../src/colors";
 import { normalizeLiveConfig } from "../src/config/normalize-entity";
 import { normalizeConfig } from "../src/config/normalize-statistics";
-import type { LegendRow, StatisticsLegendTableCardConfig } from "../src/config/types";
+import type {
+  LegendConfig,
+  LegendRow,
+  StatisticsLegendTableCardConfig,
+} from "../src/config/types";
 import { buildLegendGroups, needsIndicatorColumn, resolveIndicator } from "../src/legend-stats";
 
 const config = (
@@ -116,11 +120,19 @@ describe("resolveIndicator", () => {
 });
 
 describe("needsIndicatorColumn", () => {
+  const group = (rows: LegendRow[], config: LegendConfig = {}) => ({ rows, config });
+
   it("drops the column only when no row shows anything", () => {
-    expect(needsIndicatorColumn([row({ indicator: "none" })], {})).toBe(false);
-    expect(needsIndicatorColumn([row()], { indicator: "none" })).toBe(false);
-    expect(needsIndicatorColumn([row({ indicator: "plain_icon" })], {})).toBe(false);
-    expect(needsIndicatorColumn([row({ indicator: "none" }), row()], {})).toBe(true);
+    expect(needsIndicatorColumn([group([row({ indicator: "none" })])])).toBe(false);
+    expect(needsIndicatorColumn([group([row()], { indicator: "none" })])).toBe(false);
+    expect(needsIndicatorColumn([group([row({ indicator: "plain_icon" })])])).toBe(false);
+    expect(needsIndicatorColumn([group([row({ indicator: "none" }), row()])])).toBe(true);
+  });
+
+  it("keeps the column for every group as soon as one group needs it", () => {
+    expect(
+      needsIndicatorColumn([group([row()], { indicator: "none" }), group([row()])])
+    ).toBe(true);
   });
 });
 
