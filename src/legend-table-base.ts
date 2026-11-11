@@ -96,7 +96,7 @@ const NOTICE_HEIGHT = 55;
    as the stylesheet. One source of truth, not two that can drift apart. */
 
 /**
- * First grid column of `.legend-item`, holding the color box or icon. A group
+ * First grid column of `.legend-item`, holding the color box or icon. A legend
  * in which no row shows either drops it (`.legend-group.no-indicator`).
  */
 const LEGEND_ICON_COLUMN = 52;
@@ -446,7 +446,9 @@ export abstract class LegendTableBase<
 
   /** The stacking verdict of every group, used to spot a change on resize */
   private _narrowPerGroup(): boolean[] {
-    return this._groups().map((group) => this._isNarrow(group));
+    const groups = this._groups();
+    const indicatorColumn = needsIndicatorColumn(groups);
+    return groups.map((group) => this._isNarrow(group, indicatorColumn));
   }
 
   /* ---------------------------------------------------------------------- */
@@ -502,6 +504,7 @@ export abstract class LegendTableBase<
     }
 
     const groups = this._groups();
+    const indicatorColumn = needsIndicatorColumn(groups);
 
     return html`
       <ha-card>
@@ -514,21 +517,20 @@ export abstract class LegendTableBase<
         ${this._error ? html`<div class="notice">${this._error}</div>` : nothing}
         ${groups.some((group) => group.rows.length)
           ? html`<div class="legend${this._config.raw.card ? "" : " standalone"}">
-              ${groups.map((group) => this._renderGroup(group))}
+              ${groups.map((group) => this._renderGroup(group, indicatorColumn))}
             </div>`
           : nothing}
       </ha-card>
     `;
   }
 
-  private _renderGroup(group: LegendGroupResult) {
+  private _renderGroup(group: LegendGroupResult, indicatorColumn: boolean) {
     if (!group.rows.length) {
       return nothing;
     }
 
     const columns = this._columns(group.config);
-    const indicatorColumn = needsIndicatorColumn(group.rows, group.config);
-    // 52px indicator cell (unless no row needs one) + flexible name + one column per value
+    // 52px indicator cell (unless no row of the legend needs one) + flexible name + one column per value
     const gridColumns = [
       ...(indicatorColumn ? [`${LEGEND_ICON_COLUMN}px`] : []),
       "1fr",
@@ -539,7 +541,7 @@ export abstract class LegendTableBase<
 
     return html`
       <div
-        class="legend-group${this._isNarrow(group) ? " narrow" : ""}${indicatorColumn
+        class="legend-group${this._isNarrow(group, indicatorColumn) ? " narrow" : ""}${indicatorColumn
           ? ""
           : " no-indicator"}"
       >
@@ -676,6 +678,7 @@ export abstract class LegendTableBase<
    */
   private _legendHeight(): number {
     const groups = this._groups().filter((group) => group.rows.length);
+    const indicatorColumn = needsIndicatorColumn(groups);
     if (!groups.length) {
       return 0;
     }
@@ -684,7 +687,7 @@ export abstract class LegendTableBase<
     let blocks = 0;
 
     groups.forEach((group) => {
-      const narrow = this._isNarrow(group);
+      const narrow = this._isNarrow(group, indicatorColumn);
       // A stacking group puts every value on a line of its own beneath the name
       // and hides the header row entirely, so a row is `1 + columns` lines tall
       // rather than one — with the default single `sum` column already twice
@@ -726,16 +729,14 @@ export abstract class LegendTableBase<
    * `getGridOptions()` on every render of the section and the section renders on
    * every `hass` update, so an over-reservation corrects itself within a second.
    */
-  private _isNarrow(group: LegendGroupResult): boolean {
+  private _isNarrow(group: LegendGroupResult, indicatorColumn: boolean): boolean {
     const cardWidth = this._measuredWidth();
     if (cardWidth === undefined) {
       return true;
     }
 
     const { config } = group;
-    const indicator = needsIndicatorColumn(group.rows, config)
-      ? LEGEND_ICON_COLUMN + LEGEND_ITEM_GAP
-      : 0;
+    const indicator = indicatorColumn ? LEGEND_ICON_COLUMN + LEGEND_ITEM_GAP : 0;
     const columns = this._columns(config).length;
     const minNameWidth =
       typeof config.min_name_width === "number" && config.min_name_width >= 0

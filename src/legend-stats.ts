@@ -66,9 +66,16 @@ export function resolveIndicator(row: LegendRow, config: LegendConfig): Indicato
   return mode;
 }
 
-/** Whether a group needs the indicator column at all: some row shows something */
-export function needsIndicatorColumn(rows: LegendRow[], config: LegendConfig): boolean {
-  return rows.some((row) => resolveIndicator(row, config) !== "none");
+/**
+ * Whether the legend needs the indicator column at all: some row of some group
+ * shows something. Decided for the whole legend, not per group, so the names of
+ * every group start at the same position — a group whose rows show nothing
+ * keeps the empty column instead of moving its names to the left edge.
+ */
+export function needsIndicatorColumn(groups: LegendGroupResult[]): boolean {
+  return groups.some((group) =>
+    group.rows.some((row) => resolveIndicator(row, group.config) !== "none")
+  );
 }
 
 /**

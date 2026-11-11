@@ -181,7 +181,8 @@ entities:
 A row set to `icon` without an `icon` shows the color box, so its color stays visible; a row set
 to `plain_icon` without one shows nothing. The statistics card uses only the `icon` set here; the
 [entity card](#live-values-entity-legend-table) falls back to the entity's own icon. If no row of
-a group shows anything, the names move to the left edge.
+the legend shows anything, the names move to the left edge; otherwise the names of every row and
+every group start at the same position, whichever indicator each row shows.
 
 #### When a row shows values: `show_values`
 
