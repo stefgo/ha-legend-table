@@ -8,6 +8,19 @@ An entry is put together by the release workflow: the text written by hand in
 are added to the release page and do not belong in an entry. The entries up to
 0.5.3 were written by hand as a whole.
 
+## [1.1.2](https://github.com/stefgo/ha-legend-table/compare/v1.1.1...v1.1.2) (2026-11-11)
+
+### Names line up across groups
+
+The names of all rows now start at the same position, whatever indicator each row shows. A
+group in which no row shows an indicator (for example `indicator: none`) used to move its names
+to the left edge, out of line with the other groups; it now keeps the empty space. Only a legend
+in which no row at all shows an indicator puts its names at the left edge.
+
+### Bug Fixes
+
+* align row names across groups with different indicators ([935c367](https://github.com/stefgo/ha-legend-table/commit/935c367fdd9f3754fc0e33e57bb5cdf4aad17dac))
+
 ## [1.1.1](https://github.com/stefgo/ha-legend-table/compare/v1.1.0...v1.1.1) (2026-11-07)
 
 ### Changed

@@ -9,10 +9,3 @@ dev keeps the text; the stable release from main empties this file again.
 
 Nothing inside an HTML comment is published.
 -->
-
-### Names line up across groups
-
-The names of all rows now start at the same position, whatever indicator each row shows. A
-group in which no row shows an indicator (for example `indicator: none`) used to move its names
-to the left edge, out of line with the other groups; it now keeps the empty space. Only a legend
-in which no row at all shows an indicator puts its names at the left edge.
